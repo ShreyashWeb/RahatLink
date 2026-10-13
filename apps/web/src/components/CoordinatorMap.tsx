@@ -158,7 +158,7 @@ export function CoordinatorMap({
   const defaultCenter: [number, number] = [26.8475, 80.9465];
 
   return (
-    <div className="relative h-full min-h-[540px] w-full rounded-3xl overflow-hidden border border-[#F1D5BF] shadow-sm bg-[#EBF0F7] [background-image:radial-gradient(#CBD5E1_1px,transparent_1px)] [background-size:16px_16px]">
+    <div className="relative isolate z-0 h-full min-h-[540px] w-full rounded-3xl overflow-hidden border border-[#F1D5BF] shadow-sm bg-[#EBF0F7] [background-image:radial-gradient(#CBD5E1_1px,transparent_1px)] [background-size:16px_16px]">
       {/* Top Map Action Bar */}
       <div className="absolute top-3 left-3 right-3 z-[1000] flex items-center justify-between gap-2 pointer-events-none">
         <div className="bg-white/95 backdrop-blur-sm border border-[#F1D5BF] px-3 py-1.5 rounded-2xl shadow-sm text-xs font-bold text-[#0B1B3A] flex items-center gap-2 pointer-events-auto">

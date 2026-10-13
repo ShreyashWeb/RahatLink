@@ -643,7 +643,7 @@ export function VolunteerScreen({
 
                   {/* Resolution Note Modal */}
                   {resolvingTaskId === task.id && (
-                    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
                       <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-[#F1D5BF] space-y-4 animate-scaleUp">
                         <div className="flex items-center justify-between border-b border-gray-100 pb-2">
                           <div className="flex items-center gap-2">
@@ -700,7 +700,7 @@ export function VolunteerScreen({
 
                   {/* Need Backup Modal */}
                   {backupTaskId === task.id && (
-                    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
                       <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-red-300 space-y-4 animate-scaleUp">
                         <div className="flex items-center justify-between border-b border-gray-100 pb-2">
                           <div className="flex items-center gap-2">
