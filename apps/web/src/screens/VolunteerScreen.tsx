@@ -39,6 +39,7 @@ interface VolunteerScreenProps {
   onLogAccess: (entry: AccessLogEntry) => void;
   onSendReport: (report: Report) => void;
   onMergeQrSnapshot?: (snapshot: any) => boolean;
+  onSwitchRole?: (role: 'coordinator' | 'resident' | 'neighbour' | 'volunteer') => void;
 }
 
 export function VolunteerScreen({
@@ -51,6 +52,7 @@ export function VolunteerScreen({
   onLogAccess: _onLogAccess,
   onSendReport,
   onMergeQrSnapshot,
+  onSwitchRole,
 }: VolunteerScreenProps) {
   // Active volunteer identity (defaults to v-101 Priya Verma)
   const [activeVolunteerId, setActiveVolunteerId] = useState<string>(() => {
@@ -232,6 +234,48 @@ export function VolunteerScreen({
     'Report resident safe & confirm closure with coordinator',
   ];
 
+  const handleSimulateDemoDispatch = () => {
+    const demoTask: Task = {
+      id: `task-disp-${Date.now()}`,
+      householdIds: ['h-103', 'h-104', 'h-105'],
+      riskTier: 'HIGH',
+      score: 88,
+      breakdown: [
+        {
+          factor: 'Silence beyond grace',
+          points: 25,
+          description: '54 hours silent past 24h grace window',
+        },
+        {
+          factor: 'Cluster size',
+          points: 20,
+          description: 'Cluster of 3 silent households in Gomti Riverbank Colony',
+        },
+        {
+          factor: 'Medical vulnerability',
+          points: 25,
+          description: 'Insulin-dependent resident (h-103) with limited mobility',
+        },
+        {
+          factor: 'Flood zone proximity',
+          points: 15,
+          description: 'Inside Sector A flood alert zone (<50m to riverbank)',
+        },
+        {
+          factor: 'Battery state',
+          points: 3,
+          description: 'Critically low battery (4%) reported before silence',
+        },
+      ],
+      status: 'approved',
+      volunteerId: currentVolunteer.id,
+      approvedBy: 'Coordinator (Simulated)',
+      createdAt: new Date().toISOString(),
+      notes: 'Dispatched for insulin supply & high-water welfare check',
+    };
+    onUpdateTask(demoTask);
+  };
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* 1. Header & Identity Switcher */}
@@ -363,14 +407,42 @@ export function VolunteerScreen({
 
         {myAssignedTasks.length === 0 ? (
           /* Empty Inbox State */
-          <div className="bg-white border border-[#F1D5BF] rounded-3xl p-8 text-center space-y-3 shadow-sm">
-            <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto text-gray-400">
-              <Clock className="w-6 h-6" />
+          <div className="bg-white border border-[#F1D5BF] rounded-3xl p-6 sm:p-8 text-center space-y-4 shadow-sm">
+            <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto text-amber-600">
+              <Clock className="w-7 h-7" />
             </div>
-            <h4 className="text-sm font-bold text-[#0B1B3A]">No Pending Dispatches</h4>
-            <p className="text-xs text-[#6B7280] max-w-sm mx-auto">
-              When a coordinator approves a dispatch matching your skills and location, your alert will appear here.
-            </p>
+
+            <div className="space-y-1.5 max-w-md mx-auto">
+              <h4 className="text-base font-bold text-[#0B1B3A]">No Pending Dispatches Assigned</h4>
+              <p className="text-xs text-[#6B7280] leading-relaxed">
+                <span className="font-semibold text-[#0B1B3A]">Why is this empty?</span> In RahatLink, tasks are never auto-assigned without human governance (<span className="text-[#F26A1B] font-semibold">Hard Rule #2: Humans decide</span>).
+                When a coordinator reviews silent clusters on the dashboard and approves dispatch to {currentVolunteer.name}, the alert appears here.
+              </p>
+            </div>
+
+            {/* Suggested Actions */}
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+              {onSwitchRole && (
+                <button
+                  type="button"
+                  onClick={() => onSwitchRole('coordinator')}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold bg-[#0B1B3A] text-white hover:bg-[#1a2d52] transition-colors shadow flex items-center justify-center gap-2"
+                >
+                  <Shield className="w-3.5 h-3.5 text-[#F26A1B]" />
+                  <span>Go to Coordinator to Approve a Dispatch</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleSimulateDemoDispatch}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold bg-[#FFF6EE] border border-[#F1D5BF] text-[#C2500F] hover:bg-[#FDE8D7] transition-colors shadow-sm flex items-center justify-center gap-2"
+                title="Instant shortcut to test volunteer acceptance flow without switching roles"
+              >
+                <Radio className="w-3.5 h-3.5 text-[#F26A1B]" />
+                <span>Simulate Approved Dispatch (Demo Shortcut)</span>
+              </button>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">

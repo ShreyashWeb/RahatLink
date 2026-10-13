@@ -313,6 +313,7 @@ export default function App() {
             onLogAccess={logAccess}
             onSendReport={handleSendReport}
             onMergeQrSnapshot={mergeQrSnapshot}
+            onSwitchRole={handleSelectRole}
           />
         )}
       </main>
