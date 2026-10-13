@@ -28,6 +28,32 @@ import {
   getSyncState,
 } from './yDoc';
 
+// Shared Demo Secret for protected hub endpoints
+export const DEMO_SECRET_HEADER = { 'x-rahatlink-demo-secret': 'rahatlink-demo-2026' };
+
+/**
+ * Batches high-frequency Yjs observers to requestAnimationFrame to prevent re-render storms on low-end phones
+ */
+function createRafBatcher(fn: () => void): () => void {
+  let scheduled = false;
+  return () => {
+    if (!scheduled) {
+      scheduled = true;
+      if (typeof window !== 'undefined' && window.requestAnimationFrame) {
+        window.requestAnimationFrame(() => {
+          scheduled = false;
+          fn();
+        });
+      } else {
+        setTimeout(() => {
+          scheduled = false;
+          fn();
+        }, 16);
+      }
+    }
+  };
+}
+
 export function getHealthProfile(householdId: string): HealthProfile | undefined {
   return healthProfilesMap.get(householdId);
 }
@@ -38,9 +64,9 @@ export function useHealthProfiles(): Map<string, HealthProfile> {
   });
 
   useEffect(() => {
-    const update = () => {
+    const update = createRafBatcher(() => {
       setProfiles(new Map(Array.from(healthProfilesMap.entries())));
-    };
+    });
     healthProfilesMap.observe(update);
     return () => {
       healthProfilesMap.unobserve(update);
@@ -62,9 +88,9 @@ export function useHouseholds(): Household[] {
   });
 
   useEffect(() => {
-    const update = () => {
+    const update = createRafBatcher(() => {
       setHouseholds(Array.from(householdsMap.values()));
-    };
+    });
     householdsMap.observe(update);
     return () => {
       householdsMap.unobserve(update);
@@ -81,9 +107,9 @@ export function useCheckIns(): CheckIn[] {
   });
 
   useEffect(() => {
-    const update = () => {
+    const update = createRafBatcher(() => {
       setCheckIns(checkInsArray.toArray());
-    };
+    });
     checkInsArray.observe(update);
     return () => {
       checkInsArray.unobserve(update);
@@ -100,9 +126,9 @@ export function useTasks(): Task[] {
   });
 
   useEffect(() => {
-    const update = () => {
+    const update = createRafBatcher(() => {
       setTasks(Array.from(tasksMap.values()));
-    };
+    });
     tasksMap.observe(update);
     return () => {
       tasksMap.unobserve(update);
@@ -119,9 +145,9 @@ export function useVolunteers(): Volunteer[] {
   });
 
   useEffect(() => {
-    const update = () => {
+    const update = createRafBatcher(() => {
       setVolunteers(Array.from(volunteersMap.values()));
-    };
+    });
     volunteersMap.observe(update);
     return () => {
       volunteersMap.unobserve(update);
@@ -138,9 +164,9 @@ export function useReports(): Report[] {
   });
 
   useEffect(() => {
-    const update = () => {
+    const update = createRafBatcher(() => {
       setReports(reportsArray.toArray());
-    };
+    });
     reportsArray.observe(update);
     return () => {
       reportsArray.unobserve(update);
@@ -162,14 +188,14 @@ export function useSettings(): Settings {
   });
 
   useEffect(() => {
-    const update = () => {
+    const update = createRafBatcher(() => {
       const json = settingsMap.toJSON();
       setSettings({
         disasterMode: json.disasterMode ?? DEFAULT_SETTINGS.disasterMode,
         disasterGraceFactor: json.disasterGraceFactor ?? DEFAULT_SETTINGS.disasterGraceFactor,
         weights: { ...DEFAULT_SETTINGS.weights, ...(json.weights || {}) },
       });
-    };
+    });
     update();
     settingsMap.observe(update);
     return () => {
@@ -187,9 +213,9 @@ export function useNotifications(): AppNotification[] {
   });
 
   useEffect(() => {
-    const update = () => {
+    const update = createRafBatcher(() => {
       setNotifications(notificationsArray.toArray());
-    };
+    });
     notificationsArray.observe(update);
     return () => {
       notificationsArray.unobserve(update);
@@ -355,7 +381,10 @@ export async function sendSmsGatewayReport(from: string, text: string) {
   try {
     const res = await fetch(`http://${hubHost}:4444/sms`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...DEMO_SECRET_HEADER,
+      },
       body: JSON.stringify({ from, text }),
     });
     if (res.ok) {
@@ -453,7 +482,10 @@ export async function requestHealthBriefing(taskId: string, volunteerId: string)
   try {
     const res = await fetch(`http://${hubHost}:4444/briefing/unlock`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...DEMO_SECRET_HEADER,
+      },
       body: JSON.stringify({ taskId, volunteerId }),
     });
     if (res.ok) {
@@ -567,7 +599,10 @@ export async function requestBreakGlassBriefing(taskId: string, actor: string, r
   try {
     const res = await fetch(`http://${hubHost}:4444/briefing/break-glass`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...DEMO_SECRET_HEADER,
+      },
       body: JSON.stringify({ taskId, actor, reason }),
     });
     if (res.ok) {

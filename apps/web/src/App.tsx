@@ -31,6 +31,7 @@ import {
 import { translations, Language } from './i18n';
 import { UserRole, OnboardingModal } from './components/OnboardingModal';
 import { RoadmapModal } from './components/RoadmapModal';
+import { PwaInstallBanner } from './components/PwaInstallBanner';
 import { ResidentScreen } from './screens/ResidentScreen';
 import { NeighbourScreen } from './screens/NeighbourScreen';
 import { CoordinatorScreen } from './screens/CoordinatorScreen';
@@ -139,33 +140,60 @@ export default function App() {
   };
 
   // Status Chip
+  const formatLastSynced = (date: Date | null) => {
+    if (!date) return '';
+    const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (diffSec < 10) return ' • just now';
+    if (diffSec < 60) return ` • ${diffSec}s ago`;
+    const diffMin = Math.floor(diffSec / 60);
+    return ` • ${diffMin}m ago`;
+  };
+
   const getStatusChip = () => {
     if (syncStatus.status === 'synced') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-[#0F7A5F] border border-emerald-300">
+        <span
+          role="status"
+          aria-label={`Synced with ${syncStatus.peersCount} peer${syncStatus.peersCount === 1 ? '' : 's'}`}
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-[#0F7A5F] border border-emerald-300"
+        >
           <Wifi className="w-3.5 h-3.5 text-[#0F7A5F]" />
-          <span>Synced ({syncStatus.peersCount} peer{syncStatus.peersCount === 1 ? '' : 's'})</span>
+          <span>
+            Synced ({syncStatus.peersCount} peer{syncStatus.peersCount === 1 ? '' : 's'}
+            {formatLastSynced(syncStatus.lastSyncedAt)})
+          </span>
         </span>
       );
     }
     if (syncStatus.status === 'syncing') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-[#D97706] border border-amber-300 animate-pulse">
+        <span
+          role="status"
+          aria-label="Syncing with peers"
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-[#D97706] border border-amber-300 animate-pulse"
+        >
           <Wifi className="w-3.5 h-3.5 text-[#D97706]" />
           <span>Syncing peers...</span>
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-300">
+      <span
+        role="status"
+        aria-label="Offline, using local IndexedDB"
+        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-300"
+      >
         <WifiOff className="w-3.5 h-3.5 text-gray-500" />
-        <span>Offline (IndexedDB)</span>
+        <span>Offline (Local DB)</span>
       </span>
     );
   };
 
   return (
     <div className="min-h-screen bg-[#FFF6EE] text-[#1F2937] flex flex-col font-sans">
+      {/* PWA Offline / Install Banner */}
+      <PwaInstallBanner />
+
       {/* Top Simulated Data Ribbon */}
       <div className="bg-[#0B1B3A] text-white text-xs py-1.5 px-4 text-center font-medium tracking-wide flex items-center justify-center gap-2">
         <span className="bg-[#F26A1B] text-white px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">

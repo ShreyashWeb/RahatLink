@@ -72,16 +72,20 @@ try {
 }
 
 // Cached sync state to ensure stable reference for useSyncExternalStore
-interface SyncState {
+export interface SyncState {
   status: 'offline' | 'syncing' | 'synced';
   peersCount: number;
   idbLoaded: boolean;
+  lastSyncedAt: Date | null;
 }
+
+let lastSuccessfulSyncTime: Date | null = null;
 
 let cachedSyncState: SyncState = {
   status: 'offline',
   peersCount: 0,
   idbLoaded: false,
+  lastSyncedAt: null,
 };
 
 type SyncStateListener = (state: SyncState) => void;
@@ -105,6 +109,9 @@ export function getSyncState(): SyncState {
   let status: 'offline' | 'syncing' | 'synced' = 'offline';
   if (totalPeers > 0 || webrtcProvider.connected) {
     status = 'synced';
+    if (!lastSuccessfulSyncTime) {
+      lastSuccessfulSyncTime = new Date();
+    }
   } else if (webrtcProvider.signalingConns.length > 0) {
     status = 'syncing';
   }
@@ -112,12 +119,14 @@ export function getSyncState(): SyncState {
   if (
     cachedSyncState.status !== status ||
     cachedSyncState.peersCount !== totalPeers ||
-    cachedSyncState.idbLoaded !== isIdbLoaded
+    cachedSyncState.idbLoaded !== isIdbLoaded ||
+    cachedSyncState.lastSyncedAt !== lastSuccessfulSyncTime
   ) {
     cachedSyncState = {
       status,
       peersCount: totalPeers,
       idbLoaded: isIdbLoaded,
+      lastSyncedAt: lastSuccessfulSyncTime,
     };
   }
 
@@ -125,15 +134,31 @@ export function getSyncState(): SyncState {
 }
 
 function notifySyncListeners() {
+  const webrtcRoom = webrtcProvider.room;
+  const webrtcPeers = webrtcRoom ? webrtcRoom.webrtcConns.size : 0;
+  const wsConnected = Boolean(websocketProvider && websocketProvider.wsconnected);
+  if (webrtcPeers > 0 || wsConnected || webrtcProvider.connected) {
+    lastSuccessfulSyncTime = new Date();
+  }
   getSyncState();
   syncListeners.forEach((l) => l(cachedSyncState));
 }
 
 webrtcProvider.on('status', () => notifySyncListeners());
 webrtcProvider.on('peers', () => notifySyncListeners());
+doc.on('update', () => {
+  lastSuccessfulSyncTime = new Date();
+  notifySyncListeners();
+});
+
 if (websocketProvider) {
   websocketProvider.on('status', () => notifySyncListeners());
-  websocketProvider.on('sync', () => notifySyncListeners());
+  websocketProvider.on('sync', (isSynced: boolean) => {
+    if (isSynced) {
+      lastSuccessfulSyncTime = new Date();
+    }
+    notifySyncListeners();
+  });
 }
 
 // Initialize settings defaults if empty

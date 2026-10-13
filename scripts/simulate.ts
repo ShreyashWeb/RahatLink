@@ -662,9 +662,14 @@ async function driveLiveHub(fastMode = false) {
   }
 
   console.log('[+] Hub is online! Seeding 40 households, 2 flood zones, 8 volunteers, 6 health profiles...');
+  const demoHeaders = {
+    'Content-Type': 'application/json',
+    'x-rahatlink-demo-secret': 'rahatlink-demo-2026',
+  };
+
   const seedRes = await fetch(`${hubUrlArg}/api/simulation/seed`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: demoHeaders,
     body: JSON.stringify({
       households,
       volunteers,
@@ -687,7 +692,7 @@ async function driveLiveHub(fastMode = false) {
   console.log('[>] Step 2: Flood alert triggered! Turning Disaster Mode ON on the Hub...');
   await fetch(`${hubUrlArg}/api/settings`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: demoHeaders,
     body: JSON.stringify({ disasterMode: true, disasterGraceFactor: 0.5 }),
   });
   await sleep(delayMs);
@@ -696,7 +701,7 @@ async function driveLiveHub(fastMode = false) {
   const virtualTimeH36 = new Date('2026-10-14T12:00:00.000Z');
   await fetch(`${hubUrlArg}/api/silence/evaluate`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: demoHeaders,
     body: JSON.stringify({ simulatedTimestamp: virtualTimeH36.toISOString() }),
   });
   await sleep(delayMs);
@@ -706,7 +711,7 @@ async function driveLiveHub(fastMode = false) {
     const rep = smsReports[i];
     await fetch(`${hubUrlArg}/sms`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: demoHeaders,
       body: JSON.stringify({ from: rep.from || '+919811000100', text: rep.text }),
     });
     process.stdout.write('.');
@@ -718,7 +723,7 @@ async function driveLiveHub(fastMode = false) {
   const virtualTimeH42 = new Date('2026-10-14T18:00:00.000Z');
   await fetch(`${hubUrlArg}/api/silence/evaluate`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: demoHeaders,
     body: JSON.stringify({ simulatedTimestamp: virtualTimeH42.toISOString() }),
   });
 

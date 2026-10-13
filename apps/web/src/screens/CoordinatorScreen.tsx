@@ -18,7 +18,10 @@ import {
   rankVolunteers,
 } from '@rahatlink/core';
 import { getHealthProfile, requestBreakGlassBriefing } from '../store';
-import { CoordinatorMap } from '../components/CoordinatorMap';
+import { lazy, Suspense } from 'react';
+const CoordinatorMap = lazy(() =>
+  import('../components/CoordinatorMap').then((m) => ({ default: m.CoordinatorMap }))
+);
 import { SmsTriageModal } from '../components/SmsTriageModal';
 import { QrSyncModal } from '../components/QrSyncModal';
 import { RoadmapModal } from '../components/RoadmapModal';
@@ -844,21 +847,33 @@ export function CoordinatorScreen({
         {/* LEFT COLUMN: Map View (7 cols) */}
         <div className="lg:col-span-7 flex flex-col space-y-3">
           <div className="bg-white border border-[#F1D5BF] rounded-3xl p-3 shadow-sm min-h-[580px] flex flex-col">
-            <CoordinatorMap
-              households={households}
-              floodZones={floodZones}
-              volunteers={volunteers}
-              clusters={clusteringResult.clusters}
-              selectedHouseholdId={selectedHouseholdId}
-              onSelectHousehold={(id) => {
-                setSelectedHouseholdId(id);
-                // Also auto-expand matching task if present
-                const match = rankedTasks.find((t) => t.householdIds.includes(id));
-                if (match) {
-                  setExpandedTaskIds((prev) => new Set([...prev, match.id]));
-                }
-              }}
-            />
+            <Suspense
+              fallback={
+                <div className="w-full h-[540px] rounded-2xl bg-[#0B1B3A]/5 border border-dashed border-[#F1D5BF] flex flex-col items-center justify-center p-8 text-center space-y-3 animate-pulse">
+                  <div className="w-12 h-12 rounded-2xl bg-[#0B1B3A] text-white flex items-center justify-center shadow">
+                    <MapPin className="w-6 h-6 text-[#F26A1B]" />
+                  </div>
+                  <div className="text-sm font-bold text-[#0B1B3A]">Loading Offline Map View...</div>
+                  <div className="text-xs text-[#6B7280] max-w-xs">Initializing cached OpenStreetMap tiles &amp; spatial cluster markers</div>
+                </div>
+              }
+            >
+              <CoordinatorMap
+                households={households}
+                floodZones={floodZones}
+                volunteers={volunteers}
+                clusters={clusteringResult.clusters}
+                selectedHouseholdId={selectedHouseholdId}
+                onSelectHousehold={(id) => {
+                  setSelectedHouseholdId(id);
+                  // Also auto-expand matching task if present
+                  const match = rankedTasks.find((t) => t.householdIds.includes(id));
+                  if (match) {
+                    setExpandedTaskIds((prev) => new Set([...prev, match.id]));
+                  }
+                }}
+              />
+            </Suspense>
           </div>
 
           {/* Map Footer: Quick Cluster Selector */}

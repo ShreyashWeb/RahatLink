@@ -17,7 +17,7 @@ Rule: finish each task's acceptance check before moving on. Commit after every t
 
 ## Phase 3: Proof and polish (hours 18-24)
 - [x] T10 Flood simulator and measure mode (Prompt 10). Check: identical numbers on re-run; writes results/sim_results.csv.
-- [ ] T11 PWA, offline hardening, accessibility, visual polish (Prompt 11). Check: airplane mode works after first load.
+- [x] T11 PWA, offline hardening, accessibility, visual polish (Prompt 11). Check: airplane mode works after first load.
 
 ## Phase 4: Ship (last 6 hours, no new features)
 - [ ] T12 Tests, Playwright hero flow, DEMO.md, JUDGES_QA.md (Prompt 12).

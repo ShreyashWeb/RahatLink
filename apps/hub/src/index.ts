@@ -28,6 +28,20 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 4444;
 app.use(cors());
 app.use(express.json());
 
+// Demo Security Secret (Hardening Requirement 5)
+const DEMO_SECRET = process.env.RAHATLINK_DEMO_SECRET || 'rahatlink-demo-2026';
+
+const verifyDemoSecret = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const secret = req.headers['x-rahatlink-demo-secret'] || req.query.secret;
+  if (!secret || secret !== DEMO_SECRET) {
+    return res.status(401).json({
+      error: 'Unauthorized: Missing or invalid x-rahatlink-demo-secret header',
+      hint: 'Include header x-rahatlink-demo-secret: rahatlink-demo-2026',
+    });
+  }
+  next();
+};
+
 // Initialize binary file persistence
 initPersistence();
 
@@ -60,7 +74,7 @@ app.get('/api/settings', (_req, res) => {
   res.json(settingsMap.toJSON());
 });
 
-app.post('/api/settings', (req, res) => {
+app.post('/api/settings', verifyDemoSecret, (req, res) => {
   const updates = req.body || {};
   for (const [key, val] of Object.entries(updates)) {
     settingsMap.set(key, val);
@@ -69,7 +83,7 @@ app.post('/api/settings', (req, res) => {
 });
 
 // Trigger Silence Engine evaluation manually or with virtual simulated timestamp
-app.post('/api/silence/evaluate', (req, res) => {
+app.post('/api/silence/evaluate', verifyDemoSecret, (req, res) => {
   const { simulatedTimestamp } = req.body || {};
   const evalDate = simulatedTimestamp ? new Date(simulatedTimestamp) : new Date();
   evaluateAllHouseholds(evalDate);
@@ -82,7 +96,7 @@ app.post('/api/silence/evaluate', (req, res) => {
 });
 
 // Bulk seed endpoint for reproducible simulations
-app.post('/api/simulation/seed', (req, res) => {
+app.post('/api/simulation/seed', verifyDemoSecret, (req, res) => {
   const { households, floodZones, volunteers, healthProfiles, settings, reset } = req.body || {};
   hubDoc.transact(() => {
     if (reset) {
@@ -130,7 +144,7 @@ app.post('/api/simulation/seed', (req, res) => {
 });
 
 // Simulated SMS Ingestion Gateway (Rule-based Hinglish + English parser)
-app.post('/sms', (req, res) => {
+app.post('/sms', verifyDemoSecret, (req, res) => {
   const { from, text } = req.body || {};
   if (!text || !String(text).trim()) {
     return res.status(400).json({ error: 'Text content required' });
@@ -174,7 +188,7 @@ app.post('/sms', (req, res) => {
 });
 
 // Health Briefing Unlock Endpoint (DPDP Act Compliance)
-app.post('/briefing/unlock', (req, res) => {
+app.post('/briefing/unlock', verifyDemoSecret, (req, res) => {
   const { taskId, volunteerId } = req.body || {};
   if (!taskId || !volunteerId) {
     return res.status(400).json({ error: 'taskId and volunteerId required' });
@@ -254,7 +268,7 @@ app.post('/briefing/unlock', (req, res) => {
 });
 
 // Break-glass emergency unlock endpoint (Hard Rule 3 & 5)
-app.post('/briefing/break-glass', (req, res) => {
+app.post('/briefing/break-glass', verifyDemoSecret, (req, res) => {
   const { taskId, actor, reason } = req.body || {};
   if (!taskId || !reason || !String(reason).trim()) {
     return res.status(400).json({ error: 'taskId and mandatory logged reason required for break-glass' });
