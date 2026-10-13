@@ -289,13 +289,18 @@ export function VolunteerScreen({
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-bold text-[#0B1B3A]">{currentVolunteer.name}</h2>
                 <span
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                  className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 ${
                     currentVolunteer.available
                       ? 'bg-emerald-100 text-[#0F7A5F] border border-emerald-300'
                       : 'bg-gray-100 text-gray-600 border border-gray-300'
                   }`}
                 >
-                  {currentVolunteer.available ? '● Available' : '○ Offline'}
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      currentVolunteer.available ? 'bg-[#0F7A5F] animate-pulse' : 'bg-gray-400'
+                    }`}
+                  />
+                  {currentVolunteer.available ? 'Ready for Dispatch' : 'Off-Duty (Offline)'}
                 </span>
               </div>
               <p className="text-xs text-[#6B7280]">
@@ -360,19 +365,26 @@ export function VolunteerScreen({
             </div>
           </div>
 
-          {/* Availability Toggle */}
+          {/* Availability Action Button */}
           <div className="flex items-center sm:justify-end gap-2.5">
             <button
               type="button"
               onClick={handleToggleAvailability}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
                 currentVolunteer.available
-                  ? 'bg-[#0F7A5F] hover:bg-[#0c624c] text-white shadow'
-                  : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                  ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300'
+                  : 'bg-[#0F7A5F] hover:bg-[#0c624c] text-white shadow'
               }`}
+              title={
+                currentVolunteer.available
+                  ? 'Click to toggle off-duty'
+                  : 'Click to make available for dispatch'
+              }
             >
               <UserCheck className="w-3.5 h-3.5" />
-              <span>{currentVolunteer.available ? 'Ready for Dispatch' : 'Set as Available'}</span>
+              <span>
+                {currentVolunteer.available ? 'Go Off-Duty' : 'Mark as Ready for Dispatch'}
+              </span>
             </button>
           </div>
         </div>
