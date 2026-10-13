@@ -7,10 +7,15 @@ import {
   useReports,
   useNotifications,
   useSettings,
+  useTasks,
+  useVolunteers,
+  useFloodZones,
   addCheckIn,
   addReport,
   upsertHousehold,
+  updateTask,
   updateSettings,
+  logAccess,
   runSilenceEvaluation,
   seedDemoDataIfEmpty,
 } from './store';
@@ -36,6 +41,10 @@ export default function App() {
   const reports = useReports();
   const notifications = useNotifications();
   const settings = useSettings();
+
+  const tasks = useTasks();
+  const volunteers = useVolunteers();
+  const floodZones = useFloodZones();
 
   const [lang, setLang] = useState<Language>('en');
   const t = translations[lang];
@@ -244,11 +253,17 @@ export default function App() {
             reports={reports}
             notifications={notifications}
             settings={settings}
+            tasks={tasks}
+            volunteers={volunteers}
+            floodZones={floodZones}
+            syncStatus={syncStatus}
             lang={lang}
             onUpdateSettings={(partial) => updateSettings(partial)}
             onMarkSeenSafe={handleMarkSeenSafe}
             onRunEvaluation={(simulatedNow) => runSilenceEvaluation(simulatedNow)}
             onUpsertHousehold={upsertHousehold}
+            onUpdateTask={updateTask}
+            onLogAccess={logAccess}
           />
         )}
       </main>

@@ -10,7 +10,7 @@ Rule: finish each task's acceptance check before moving on. Commit after every t
 - [x] T5 DBSCAN and risk score with breakdown (Prompt 5). Check: lone miss LOW; clustered insulin-dependent near flood HIGH.
 
 ## Phase 2: Product (hours 8-18)
-- [ ] T6 Coordinator dashboard: map, ranked list, approve/override/seen safe (Prompt 6).
+- [x] T6 Coordinator dashboard: map, ranked list, approve/override/seen safe (Prompt 6).
 - [ ] T7 Volunteer app and matching (Prompt 7). Check: no sensitive data before accept.
 - [ ] T8 Health profile, consent, tiered briefing, log, break-glass, delete (Prompt 8). Check: 403 before accept, works after, rejected after resolve.
 - [ ] T9 SMS parser, triage screen, QR sync (Prompt 9). Cut QR first if short on time.

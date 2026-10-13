@@ -8,6 +8,8 @@ import type {
   AccessLogEntry,
   Settings,
   AppNotification,
+  HealthProfile,
+  FloodZone,
 } from '@rahatlink/core';
 import { DEFAULT_SETTINGS, evaluateHousehold } from '@rahatlink/core';
 import {
@@ -20,9 +22,33 @@ import {
   accessLogArray,
   notificationsArray,
   settingsMap,
+  floodZonesArray,
+  healthProfilesMap,
   subscribeSyncState,
   getSyncState,
 } from './yDoc';
+
+export function getHealthProfile(householdId: string): HealthProfile | undefined {
+  return healthProfilesMap.get(householdId);
+}
+
+export function useHealthProfiles(): Map<string, HealthProfile> {
+  const [profiles, setProfiles] = useState<Map<string, HealthProfile>>(() => {
+    return new Map(Array.from(healthProfilesMap.entries()));
+  });
+
+  useEffect(() => {
+    const update = () => {
+      setProfiles(new Map(Array.from(healthProfilesMap.entries())));
+    };
+    healthProfilesMap.observe(update);
+    return () => {
+      healthProfilesMap.unobserve(update);
+    };
+  }, []);
+
+  return profiles;
+}
 
 // Hook 1: useSyncStatus
 export function useSyncStatus() {
@@ -231,6 +257,25 @@ export function runSilenceEvaluation(now: Date = new Date()) {
   });
 }
 
+// Hook 9: useFloodZones
+export function useFloodZones(): FloodZone[] {
+  const [floodZones, setFloodZones] = useState<FloodZone[]>(() => {
+    return floodZonesArray.toArray();
+  });
+
+  useEffect(() => {
+    const update = () => {
+      setFloodZones(floodZonesArray.toArray());
+    };
+    floodZonesArray.observe(update);
+    return () => {
+      floodZonesArray.unobserve(update);
+    };
+  }, []);
+
+  return floodZones;
+}
+
 // ==========================================
 // Mutation Helpers
 // ==========================================
@@ -340,18 +385,66 @@ export function seedDemoDataIfEmpty() {
       {
         id: 'h-103',
         name: 'Verma Residence (Insulin Dependent)',
-        lat: 26.8482,
-        lng: 80.9455,
+        lat: 26.8476,
+        lng: 80.9461, // Cluster 1 member (<70m from h-104)
         address: 'House 19, Riverbank Colony, Lucknow',
         floor: 0,
         contactPhone: '+91 97222 33445',
         householdSize: 3,
         hasSmartphone: true,
         graceHours: 24,
-        lastCheckInAt: new Date(Date.now() - 90000000).toISOString(), // >24h silent
-        lastBattery: 45,
+        lastCheckInAt: new Date(Date.now() - 54 * 3600000).toISOString(), // >24h silent
+        lastBattery: 4, // critical battery
         consent: { health: true, grantedAt: new Date().toISOString() },
-        status: 'grace',
+        status: 'flagged',
+      },
+      {
+        id: 'h-104',
+        name: 'Mishra Family (Riverbank)',
+        lat: 26.8471,
+        lng: 80.9463, // Cluster 1 member
+        address: 'House 21, Riverbank Colony, Lucknow',
+        floor: 1,
+        contactPhone: '+91 98333 44556',
+        householdSize: 4,
+        hasSmartphone: true,
+        graceHours: 24,
+        lastCheckInAt: new Date(Date.now() - 50 * 3600000).toISOString(),
+        lastBattery: 45,
+        consent: { health: false },
+        status: 'flagged',
+      },
+      {
+        id: 'h-105',
+        name: 'Srivastava Home',
+        lat: 26.8473,
+        lng: 80.9465, // Cluster 1 member
+        address: 'House 22, Riverbank Colony, Lucknow',
+        floor: 2,
+        contactPhone: '+91 98444 55667',
+        householdSize: 2,
+        hasSmartphone: true,
+        graceHours: 24,
+        lastCheckInAt: new Date(Date.now() - 48 * 3600000).toISOString(),
+        lastBattery: 60,
+        consent: { health: false },
+        status: 'flagged',
+      },
+      {
+        id: 'h-106',
+        name: 'Solitary Outlier (Indiranagar)',
+        lat: 26.858,
+        lng: 80.958, // Outlier 1.2km away
+        address: 'House 99, Sector 14, Indiranagar',
+        floor: 1,
+        contactPhone: '+91 98555 66778',
+        householdSize: 1,
+        hasSmartphone: true,
+        graceHours: 24,
+        lastCheckInAt: new Date(Date.now() - 36 * 3600000).toISOString(),
+        lastBattery: 90,
+        consent: { health: false },
+        status: 'flagged',
       },
     ];
 
@@ -364,6 +457,75 @@ export function seedDemoDataIfEmpty() {
           settingsMap.set(k, v);
         }
       }
+    });
+  }
+
+  // Seed flood zones if empty
+  if (floodZonesArray.length === 0) {
+    const demoFloodZones: FloodZone[] = [
+      {
+        id: 'fz-1',
+        name: 'Gomti Riverbank Sector A',
+        polygon: [
+          [26.8475, 80.946],
+          [26.8485, 80.947],
+          [26.8478, 80.948],
+          [26.8471, 80.9472],
+        ],
+      },
+    ];
+    doc.transact(() => {
+      floodZonesArray.push(demoFloodZones);
+    });
+  }
+
+  // Seed volunteers if empty
+  if (volunteersMap.size === 0) {
+    const demoVolunteers: Volunteer[] = [
+      {
+        id: 'v-101',
+        name: 'Priya Verma',
+        skills: ['first-aid', 'boat', 'medical'],
+        equipment: ['life-jacket', 'first-aid-kit'],
+        lat: 26.8468,
+        lng: 80.9452,
+        available: true,
+      },
+      {
+        id: 'v-102',
+        name: 'Amit Kumar',
+        skills: ['first-aid'],
+        equipment: ['first-aid-kit'],
+        lat: 26.848,
+        lng: 80.9465,
+        available: true,
+      },
+      {
+        id: 'v-103',
+        name: 'Sandeep Singh',
+        skills: ['boat'],
+        equipment: ['boat', 'life-jacket'],
+        lat: 26.844,
+        lng: 80.943,
+        available: false,
+      },
+    ];
+    doc.transact(() => {
+      for (const v of demoVolunteers) {
+        volunteersMap.set(v.id, v);
+      }
+    });
+  }
+
+  // Seed health profile for h-103 if empty (stored in separate privacy-isolated healthDoc)
+  if (healthProfilesMap.size === 0) {
+    healthProfilesMap.set('h-103', {
+      householdId: 'h-103',
+      conditions: ['insulin-dependent', 'limited-mobility'],
+      allergies: ['penicillin'],
+      medications: 'Insulin Glargine 20u daily',
+      notes: 'Elderly resident, needs refrigerated insulin supplies and ground-floor access assistance',
+      updatedAt: new Date().toISOString(),
     });
   }
 }
