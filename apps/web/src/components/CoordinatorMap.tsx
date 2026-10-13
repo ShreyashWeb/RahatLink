@@ -201,9 +201,9 @@ export function CoordinatorMap({
         />
 
         {/* 1. Flood Zones as translucent polygons */}
-        {floodZones.map((fz) => (
+        {floodZones.map((fz, idx) => (
           <Polygon
-            key={fz.id}
+            key={fz.id || `fz-${idx}`}
             positions={fz.polygon}
             pathOptions={{
               color: '#1E40AF',
@@ -213,8 +213,8 @@ export function CoordinatorMap({
               dashArray: '4, 4',
             }}
           >
-            <Tooltip permanent direction="center" className="bg-blue-900 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow">
-              {fz.name} (Flood Risk)
+            <Tooltip sticky direction="top">
+              <span>🌊 {fz.name} (Flood Risk Zone)</span>
             </Tooltip>
           </Polygon>
         ))}

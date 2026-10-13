@@ -24,3 +24,35 @@ h1, h2, h3, h4, h5, h6 {
   font-family: 'Trebuchet MS', Inter, system-ui, sans-serif;
   font-weight: 700;
 }
+
+/* Custom Leaflet Tooltip & Popup Polish */
+.leaflet-tooltip {
+  background-color: #0B1B3A !important;
+  color: #FFFFFF !important;
+  border: 1px solid #2F6FDE !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 12px rgba(11, 27, 58, 0.25) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 4px 8px !important;
+}
+
+.leaflet-tooltip-top:before {
+  border-top-color: #0B1B3A !important;
+}
+
+.leaflet-tooltip-bottom:before {
+  border-bottom-color: #0B1B3A !important;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 16px !important;
+  box-shadow: 0 6px 20px rgba(11, 27, 58, 0.18) !important;
+  border: 1px solid #F1D5BF !important;
+  padding: 0 !important;
+}
+
+.leaflet-popup-content {
+  margin: 8px 12px !important;
+  line-height: 1.4 !important;
+}

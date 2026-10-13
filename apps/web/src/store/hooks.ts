@@ -285,14 +285,23 @@ export function runSilenceEvaluation(now: Date = new Date()) {
 
 // Hook 9: useFloodZones
 export function useFloodZones(): FloodZone[] {
-  const [floodZones, setFloodZones] = useState<FloodZone[]>(() => {
-    return floodZonesArray.toArray();
-  });
+  const getUniqueZones = (): FloodZone[] => {
+    const raw = floodZonesArray.toArray();
+    const map = new Map<string, FloodZone>();
+    for (const fz of raw) {
+      if (fz && fz.id) {
+        map.set(fz.id, fz);
+      }
+    }
+    return Array.from(map.values());
+  };
+
+  const [floodZones, setFloodZones] = useState<FloodZone[]>(getUniqueZones);
 
   useEffect(() => {
-    const update = () => {
-      setFloodZones(floodZonesArray.toArray());
-    };
+    const update = createRafBatcher(() => {
+      setFloodZones(getUniqueZones());
+    });
     floodZonesArray.observe(update);
     return () => {
       floodZonesArray.unobserve(update);
