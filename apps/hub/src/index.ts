@@ -10,12 +10,14 @@ import {
   hubDoc,
   householdsMap,
   tasksMap,
+  reportsArray,
   accessLogArray,
   notificationsArray,
   healthProfilesMap,
   settingsMap,
 } from './hubStore';
 import type { AccessLogEntry } from '@rahatlink/core';
+import { createReportFromSms } from '@rahatlink/core';
 
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 4444;
@@ -76,14 +78,46 @@ app.post('/api/silence/evaluate', (req, res) => {
   });
 });
 
-// Simulated SMS Ingestion stub (Prompt 9)
+// Simulated SMS Ingestion Gateway (Rule-based Hinglish + English parser)
 app.post('/sms', (req, res) => {
   const { from, text } = req.body || {};
-  res.status(202).json({
-    received: true,
-    from: from || 'unknown',
-    text: text || '',
-    note: 'SMS ingestion endpoint ready (Prompt 9)',
+  if (!text || !String(text).trim()) {
+    return res.status(400).json({ error: 'Text content required' });
+  }
+
+  const households = Array.from(householdsMap.values());
+  const report = createReportFromSms(from || 'unknown', String(text).trim(), households);
+
+  // Push into reportsArray on hub doc (broadcasts to connected peers)
+  reportsArray.push([report]);
+
+  // If a household was matched, log notification
+  if (report.parsed?.matchedHouseholdId) {
+    const matchedH = householdsMap.get(report.parsed.matchedHouseholdId);
+    if (matchedH) {
+      notificationsArray.push([
+        {
+          id: `notif-sms-${Date.now()}`,
+          householdId: matchedH.id,
+          householdName: matchedH.name,
+          type: 'flagged',
+          message: `SMS distress report received from ${from || 'resident'} matching ${matchedH.name} (${report.parsed.urgency} urgency): "${text}"`,
+          at: new Date().toISOString(),
+        },
+      ]);
+    }
+  }
+
+  return res.status(201).json({
+    success: true,
+    report,
+    matchedHouseholdId: report.parsed?.matchedHouseholdId,
+    confidence: report.parsed?.confidence,
+    urgency: report.parsed?.urgency,
+    needs: report.parsed?.needs,
+    peopleCount: report.parsed?.peopleCount,
+    locationHint: report.parsed?.locationHint,
+    corroborating: Boolean(report.parsed?.matchedHouseholdId),
     simulated: true,
   });
 });

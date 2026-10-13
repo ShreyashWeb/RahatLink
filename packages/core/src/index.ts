@@ -4,6 +4,8 @@ export * from './cluster';
 export * from './risk';
 export * from './match';
 export * from './privacy';
+export * from './parse';
+export * from './qr';
 
 export const DEFAULT_RISK_WEIGHTS = {
   silenceBeyondGrace: 25,

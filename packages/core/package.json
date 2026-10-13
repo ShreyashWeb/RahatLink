@@ -18,7 +18,11 @@
     "build": "tsup src/index.ts --format esm,cjs --dts",
     "test": "vitest run"
   },
+  "dependencies": {
+    "pako": "^2.1.0"
+  },
   "devDependencies": {
+    "@types/pako": "^2.0.3",
     "tsup": "^8.3.6",
     "typescript": "^5.7.3",
     "vitest": "^3.0.5"

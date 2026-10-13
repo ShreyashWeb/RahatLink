@@ -225,10 +225,13 @@ export function scoreHousehold(
 
   const sixHoursAgoMs = now.getTime() - 6 * 3600 * 1000;
   const nearbyReports = reports.filter((r) => {
-    if (!r.lat || !r.lng) return false;
     const reportTime = new Date(r.at).getTime();
     if (reportTime < sixHoursAgoMs) return false;
-    return haversine(h, { lat: r.lat, lng: r.lng }) <= 200;
+    if (r.parsed?.matchedHouseholdId === h.id) return true;
+    if (r.lat && r.lng) {
+      return haversine(h, { lat: r.lat, lng: r.lng }) <= 200;
+    }
+    return false;
   });
 
   if (nearbyReports.length > 0) {

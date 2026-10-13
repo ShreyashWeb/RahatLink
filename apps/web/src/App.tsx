@@ -24,9 +24,13 @@ import {
   logAccess,
   runSilenceEvaluation,
   seedDemoDataIfEmpty,
+  updateReport,
+  sendSmsGatewayReport,
+  mergeQrSnapshot,
 } from './store';
 import { translations, Language } from './i18n';
 import { UserRole, OnboardingModal } from './components/OnboardingModal';
+import { RoadmapModal } from './components/RoadmapModal';
 import { ResidentScreen } from './screens/ResidentScreen';
 import { NeighbourScreen } from './screens/NeighbourScreen';
 import { CoordinatorScreen } from './screens/CoordinatorScreen';
@@ -39,6 +43,7 @@ import {
   Database,
   Globe,
   UserCheck,
+  Bluetooth,
 } from 'lucide-react';
 
 export default function App() {
@@ -67,6 +72,7 @@ export default function App() {
   });
 
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  const [isRoadmapOpen, setIsRoadmapOpen] = useState(false);
 
   useEffect(() => {
     seedDemoDataIfEmpty();
@@ -195,6 +201,17 @@ export default function App() {
 
           {/* Right Controls: Role Badge + Language Toggle + Sync Status */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Roadmap / Architecture button */}
+            <button
+              type="button"
+              onClick={() => setIsRoadmapOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#E8ECF4] border border-[#CCD6E8] text-[#0B1B3A] hover:bg-[#D4E0F5] transition-colors"
+              title="Architecture & Future Roadmap (Bluetooth Mesh)"
+            >
+              <Bluetooth className="w-3.5 h-3.5 text-[#2F6FDE]" />
+              <span className="hidden md:inline">Roadmap</span>
+            </button>
+
             {/* Role Button */}
             <button
               type="button"
@@ -279,6 +296,9 @@ export default function App() {
             onUpsertHousehold={upsertHousehold}
             onUpdateTask={updateTask}
             onLogAccess={logAccess}
+            onUpdateReport={updateReport}
+            onSendSms={sendSmsGatewayReport}
+            onMergeQrSnapshot={mergeQrSnapshot}
           />
         )}
 
@@ -292,6 +312,7 @@ export default function App() {
             onMarkSeenSafe={handleMarkSeenSafe}
             onLogAccess={logAccess}
             onSendReport={handleSendReport}
+            onMergeQrSnapshot={mergeQrSnapshot}
           />
         )}
       </main>
@@ -307,6 +328,12 @@ export default function App() {
         activeHouseholdId={activeHouseholdId}
         onSelectHousehold={handleSelectHousehold}
         onRegisterHousehold={handleRegisterHousehold}
+      />
+
+      {/* Architecture & Future Roadmap Modal */}
+      <RoadmapModal
+        isOpen={isRoadmapOpen}
+        onClose={() => setIsRoadmapOpen(false)}
       />
 
       {/* Footer */}

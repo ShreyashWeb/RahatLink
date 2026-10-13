@@ -25,7 +25,9 @@ import {
   Clock,
   Send,
   Radio,
+  QrCode,
 } from 'lucide-react';
+import { QrSyncModal } from '../components/QrSyncModal';
 
 interface VolunteerScreenProps {
   volunteers: Volunteer[];
@@ -36,6 +38,7 @@ interface VolunteerScreenProps {
   onMarkSeenSafe: (householdId: string) => void;
   onLogAccess: (entry: AccessLogEntry) => void;
   onSendReport: (report: Report) => void;
+  onMergeQrSnapshot?: (snapshot: any) => boolean;
 }
 
 export function VolunteerScreen({
@@ -47,11 +50,14 @@ export function VolunteerScreen({
   onMarkSeenSafe,
   onLogAccess: _onLogAccess,
   onSendReport,
+  onMergeQrSnapshot,
 }: VolunteerScreenProps) {
   // Active volunteer identity (defaults to v-101 Priya Verma)
   const [activeVolunteerId, setActiveVolunteerId] = useState<string>(() => {
     return volunteers[0]?.id || 'v-101';
   });
+
+  const [isQrSyncOpen, setIsQrSyncOpen] = useState(false);
 
   const currentVolunteer =
     volunteers.find((v) => v.id === activeVolunteerId) || volunteers[0];
@@ -254,8 +260,18 @@ export function VolunteerScreen({
             </div>
           </div>
 
-          {/* Volunteer Profile Selector */}
+          {/* Volunteer Profile Selector & QR Sync */}
           <div className="flex items-center gap-2 self-start sm:self-center">
+            <button
+              type="button"
+              onClick={() => setIsQrSyncOpen(true)}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#0B1B3A] text-white hover:bg-[#1a2d52] transition-colors flex items-center gap-1.5 shadow-sm"
+              title="Air-gapped sync with coordinator via QR code"
+            >
+              <QrCode className="w-3.5 h-3.5 text-[#F26A1B]" />
+              <span>QR Sync</span>
+            </button>
+
             <span className="text-xs text-[#6B7280] font-semibold">Profile:</span>
             <select
               value={activeVolunteerId}
@@ -772,6 +788,27 @@ export function VolunteerScreen({
           </div>
         )}
       </div>
+
+      {/* Air-Gapped Volunteer QR Sync Modal */}
+      <QrSyncModal
+        isOpen={isQrSyncOpen}
+        onClose={() => setIsQrSyncOpen(false)}
+        title="Volunteer Air-Gapped QR Sync"
+        subtitle="Scan assignments from coordinator or share completed dispatches"
+        dataToShare={{
+          type: 'volunteer-results-sync',
+          volunteerId: currentVolunteer?.id,
+          volunteerName: currentVolunteer?.name,
+          resolvedTasks: tasks
+            .filter((t) => t.volunteerId === currentVolunteer?.id && t.status === 'resolved')
+            .map((t) => t.id),
+          timestamp: new Date().toISOString(),
+        }}
+        onSnapshotMerged={(data) => {
+          onMergeQrSnapshot?.(data);
+        }}
+        defaultMode="scan"
+      />
     </div>
   );
 }

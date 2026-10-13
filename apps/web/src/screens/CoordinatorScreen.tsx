@@ -19,6 +19,9 @@ import {
 } from '@rahatlink/core';
 import { getHealthProfile, requestBreakGlassBriefing } from '../store';
 import { CoordinatorMap } from '../components/CoordinatorMap';
+import { SmsTriageModal } from '../components/SmsTriageModal';
+import { QrSyncModal } from '../components/QrSyncModal';
+import { RoadmapModal } from '../components/RoadmapModal';
 import type { Language } from '../i18n';
 import {
   Shield,
@@ -45,6 +48,9 @@ import {
   Unlock,
   AlertOctagon,
   ShieldCheck,
+  MessageSquare,
+  QrCode,
+  Bluetooth,
 } from 'lucide-react';
 
 interface CoordinatorScreenProps {
@@ -65,6 +71,9 @@ interface CoordinatorScreenProps {
   onUpsertHousehold: (household: Household) => void;
   onUpdateTask: (task: Task) => void;
   onLogAccess: (entry: AccessLogEntry) => void;
+  onUpdateReport?: (report: Report) => void;
+  onSendSms?: (from: string, text: string) => Promise<any>;
+  onMergeQrSnapshot?: (snapshot: any) => boolean;
 }
 
 export function CoordinatorScreen({
@@ -85,11 +94,19 @@ export function CoordinatorScreen({
   onUpsertHousehold: _onUpsertHousehold,
   onUpdateTask,
   onLogAccess,
+  onUpdateReport,
+  onSendSms,
+  onMergeQrSnapshot,
 }: CoordinatorScreenProps) {
   const [selectedHouseholdId, setSelectedHouseholdId] = useState<string | undefined>('h-103');
   const [expandedTaskIds, setExpandedTaskIds] = useState<Set<string>>(new Set(['task-cluster-1']));
   const [isFeedOpen, setIsFeedOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // Triage & Data-Poor Fallback modals
+  const [isTriageOpen, setIsTriageOpen] = useState(false);
+  const [isQrSyncOpen, setIsQrSyncOpen] = useState(false);
+  const [isRoadmapOpen, setIsRoadmapOpen] = useState(false);
 
   // Audit log modal state
   const [isAuditLogOpen, setIsAuditLogOpen] = useState(false);
@@ -124,6 +141,58 @@ export function CoordinatorScreen({
       setIsSubmittingBreakGlass(false);
     }
   };
+
+  const handleCreateTaskFromReport = (report: Report, householdId: string) => {
+    const matchedH = households.find((h) => h.id === householdId);
+    if (!matchedH) return;
+
+    const newTask: Task = {
+      id: `task-rep-${Date.now()}`,
+      householdIds: [matchedH.id],
+      score: report.parsed?.urgency === 'HIGH' ? 85 : 65,
+      riskTier: report.parsed?.urgency || 'MEDIUM',
+      status: 'approved',
+      breakdown: [
+        {
+          factor: 'Corroborating Ingested Report',
+          points: report.parsed?.urgency === 'HIGH' ? 35 : 20,
+          description: `Direct field report received (${report.source.toUpperCase()}) with urgent keywords`,
+        },
+        {
+          factor: 'Household Assessment',
+          points: 50,
+          description: `Direct dispatch created for ${matchedH.name} in response to report`,
+        },
+      ],
+      createdAt: new Date().toISOString(),
+      overrideReason: `Created from ${report.source.toUpperCase()} report: "${report.text}"`,
+    };
+
+    onUpdateTask(newTask);
+
+    if (onUpdateReport) {
+      onUpdateReport({
+        ...report,
+        status: 'linked',
+        lat: matchedH.lat,
+        lng: matchedH.lng,
+        parsed: {
+          ...report.parsed,
+          matchedHouseholdId: matchedH.id,
+        },
+      });
+    }
+  };
+
+  const qrSnapshotToShare = useMemo(() => {
+    return {
+      snapshotAt: new Date().toISOString(),
+      tasks,
+      flaggedHouseholds: households.filter(
+        (h) => h.status === 'flagged' || h.status === 'pinged',
+      ),
+    };
+  }, [tasks, households]);
 
   // Volunteer Match Modal State
   const [matchingTask, setMatchingTask] = useState<{
@@ -561,12 +630,42 @@ export function CoordinatorScreen({
 
           <button
             type="button"
+            onClick={() => setIsTriageOpen(true)}
+            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-[#0B1B3A] border border-[#F1D5BF] hover:bg-[#FFF6EE] transition-all flex items-center gap-1.5"
+            title="SMS distress reports triage and parsing"
+          >
+            <MessageSquare className="w-3.5 h-3.5 text-blue-600" />
+            <span>Triage ({reports.length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsQrSyncOpen(true)}
+            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-[#0B1B3A] border border-[#F1D5BF] hover:bg-[#FFF6EE] transition-all flex items-center gap-1.5"
+            title="Air-gapped multi-part QR sync with volunteers"
+          >
+            <QrCode className="w-3.5 h-3.5 text-[#F26A1B]" />
+            <span>QR Sync</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setIsAuditLogOpen(true)}
             className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-[#0B1B3A] border border-[#F1D5BF] hover:bg-[#FFF6EE] transition-all flex items-center gap-1.5"
             title="View system-wide privacy and access audit logs"
           >
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
             <span>Audit Log ({accessLogs.length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsRoadmapOpen(true)}
+            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-[#0B1B3A] border border-[#F1D5BF] hover:bg-[#FFF6EE] transition-all flex items-center gap-1.5"
+            title="Technology Roadmap & Bluetooth Mesh Scope"
+          >
+            <Bluetooth className="w-3.5 h-3.5 text-purple-600" />
+            <span>Roadmap</span>
           </button>
         </div>
       </div>
@@ -1653,6 +1752,39 @@ export function CoordinatorScreen({
           </div>
         </div>
       )}
+
+      {/* 8. SMS & Incident Triage Modal */}
+      <SmsTriageModal
+        isOpen={isTriageOpen}
+        onClose={() => setIsTriageOpen(false)}
+        reports={reports}
+        households={households}
+        onUpdateReport={(rep) => onUpdateReport?.(rep)}
+        onCreateTaskFromReport={handleCreateTaskFromReport}
+        onSendSms={async (from, text) => {
+          if (onSendSms) return await onSendSms(from, text);
+          return null;
+        }}
+      />
+
+      {/* 9. Air-Gapped QR Snapshot Sync Modal */}
+      <QrSyncModal
+        isOpen={isQrSyncOpen}
+        onClose={() => setIsQrSyncOpen(false)}
+        title="Air-Gapped Volunteer QR Sync"
+        subtitle="Exchange tasks and flagged households with volunteers via compressed QR codes"
+        dataToShare={qrSnapshotToShare}
+        onSnapshotMerged={(data) => {
+          onMergeQrSnapshot?.(data);
+        }}
+        defaultMode="share"
+      />
+
+      {/* 10. Technology Architecture & Roadmap Modal */}
+      <RoadmapModal
+        isOpen={isRoadmapOpen}
+        onClose={() => setIsRoadmapOpen(false)}
+      />
     </div>
   );
 }

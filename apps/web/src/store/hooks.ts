@@ -11,7 +11,7 @@ import type {
   HealthProfile,
   FloodZone,
 } from '@rahatlink/core';
-import { DEFAULT_SETTINGS, evaluateHousehold } from '@rahatlink/core';
+import { DEFAULT_SETTINGS, evaluateHousehold, createReportFromSms } from '@rahatlink/core';
 import {
   doc,
   householdsMap,
@@ -335,6 +335,105 @@ export function logAccess(entry: AccessLogEntry) {
 
 export function addReport(report: Report) {
   reportsArray.push([report]);
+}
+
+export function updateReport(report: Report) {
+  doc.transact(() => {
+    const reports = reportsArray.toArray();
+    const idx = reports.findIndex((r) => r.id === report.id);
+    if (idx !== -1) {
+      reportsArray.delete(idx, 1);
+      reportsArray.insert(idx, [report]);
+    } else {
+      reportsArray.push([report]);
+    }
+  });
+}
+
+export async function sendSmsGatewayReport(from: string, text: string) {
+  const hubHost = typeof window !== 'undefined' ? window.location.hostname || 'localhost' : 'localhost';
+  try {
+    const res = await fetch(`http://${hubHost}:4444/sms`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from, text }),
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (_err) {
+    // Offline fallback: parse locally
+  }
+
+  const households = Array.from(householdsMap.values());
+  const report = createReportFromSms(from || '+91 98765 43210', text, households);
+  addReport(report);
+  return {
+    success: true,
+    report,
+    matchedHouseholdId: report.parsed?.matchedHouseholdId,
+    confidence: report.parsed?.confidence,
+    urgency: report.parsed?.urgency,
+    needs: report.parsed?.needs,
+    peopleCount: report.parsed?.peopleCount,
+    locationHint: report.parsed?.locationHint,
+    corroborating: Boolean(report.parsed?.matchedHouseholdId),
+    simulated: true,
+  };
+}
+
+export function mergeQrSnapshot(snapshot: any): boolean {
+  if (!snapshot || typeof snapshot !== 'object') return false;
+
+  doc.transact(() => {
+    // 1. If snapshot contains tasks
+    if (Array.isArray(snapshot.tasks)) {
+      for (const t of snapshot.tasks) {
+        if (t && t.id) {
+          tasksMap.set(t.id, t);
+        }
+      }
+    }
+
+    // 2. If snapshot contains flagged households
+    if (Array.isArray(snapshot.flaggedHouseholds)) {
+      for (const h of snapshot.flaggedHouseholds) {
+        if (h && h.id) {
+          const existing = householdsMap.get(h.id);
+          householdsMap.set(h.id, { ...existing, ...h });
+        }
+      }
+    }
+
+    // 3. If volunteer reverse sync
+    if (Array.isArray(snapshot.resolvedTasks)) {
+      for (const taskId of snapshot.resolvedTasks) {
+        const task = tasksMap.get(taskId);
+        if (task) {
+          tasksMap.set(taskId, {
+            ...task,
+            status: 'resolved',
+            resolvedAt: new Date().toISOString(),
+          });
+        }
+      }
+    }
+
+    if (Array.isArray(snapshot.seenSafeHouseholds)) {
+      for (const hId of snapshot.seenSafeHouseholds) {
+        const h = householdsMap.get(hId);
+        if (h) {
+          householdsMap.set(hId, {
+            ...h,
+            status: 'seenSafe',
+            lastCheckInAt: new Date().toISOString(),
+          });
+        }
+      }
+    }
+  });
+
+  return true;
 }
 
 export function updateSettings(partial: Partial<Settings>) {

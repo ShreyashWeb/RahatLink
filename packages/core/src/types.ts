@@ -69,15 +69,23 @@ export interface ParsedReport {
   urgency?: RiskTier;
   needs?: string[];
   matchedHouseholdId?: string;
+  peopleCount?: number;
+  locationHint?: string;
+  confidence?: number;
+  explanation?: string;
 }
+
+export type ReportStatus = 'pending' | 'linked' | 'task_created' | 'ignored';
 
 export interface Report {
   id: string;
   at: string;
+  from?: string;
   lat?: number;
   lng?: number;
   text: string;
   source: ReportSource;
+  status?: ReportStatus;
   parsed?: ParsedReport;
 }
 
@@ -114,6 +122,8 @@ export interface Task {
   status: TaskStatus;
   volunteerId?: string;
   approvedBy?: string;
+  overrideReason?: string;
+  notes?: string;
   createdAt: string;
   resolvedAt?: string;
 }
