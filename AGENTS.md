@@ -1,6 +1,6 @@
 # AGENTS.md: context for AI coding agents
 
-Project: RahatLink, an offline-first app that detects who went silent (missed check-ins) in disasters and daily life, clusters and ranks silent households, and lets a coordinator approve volunteer dispatch. Team CodeForge, SRIJAN 2K26.
+Project: RahatLink, an offline-first app that detects who went silent (missed check-ins) in disasters and daily life, clusters and ranks silent households, and lets a coordinator approve volunteer dispatch.
 
 Read `docs/PRD.md` (what), `docs/TRD.md` (how), `docs/THEME.md` (look), `docs/TASKS.md` (what is next), `docs/WORKFLOW.md` (rules).
 

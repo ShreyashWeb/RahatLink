@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 RahatLink: Task-to-Volunteer Assignment Engine (OR-Tools vs. Greedy Benchmark)
-SRIJAN 2K26 | Team CodeForge
 
 Demonstrates Global Linear Sum Assignment with Google OR-Tools compared to Greedy heuristic.
 Run with:
@@ -209,8 +208,8 @@ def main():
     args = parser.parse_args()
 
     print("=" * 75)
-    print("  RAHATLINK: VOLUNTEER MATCHING BENCHMARK (SRIJAN 2K26)")
-    print("  Offline First • Team CodeForge • Zero Cloud Dependencies")
+    print("  RAHATLINK: VOLUNTEER MATCHING BENCHMARK")
+    print("  Offline First • Local Heuristics • Zero Cloud Dependencies")
     print("=" * 75)
 
     greedy_res, greedy_total = solve_greedy(TASKS, VOLUNTEERS)

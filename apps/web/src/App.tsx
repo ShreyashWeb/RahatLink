@@ -221,8 +221,7 @@ export default function App() {
                 Rahat<span className="text-[#F26A1B]">Link</span>
               </div>
               <div className="text-[10px] sm:text-xs text-[#6B7280]">
-                Team <span className="text-[#0B1B3A] font-semibold">Code</span>
-                <span className="text-[#F26A1B] font-semibold">Forge</span> | SRIJAN 2K26
+                Proactive Neighbourhood Safety
               </div>
             </div>
           </div>
@@ -367,7 +366,7 @@ export default function App() {
 
       {/* Footer */}
       <footer className="bg-white border-t border-[#F1D5BF] py-4 px-6 text-center text-xs text-[#6B7280]">
-        RahatLink • {t.tagline} • Team CodeForge
+        RahatLink • {t.tagline}
       </footer>
     </div>
   );

@@ -1809,7 +1809,7 @@ export function CoordinatorScreen({
                           <div className="text-xs text-amber-900 space-y-1">
                             <p className="font-bold">Medical records were withheld.</p>
                             <p className="text-[11px] text-amber-800">
-                              Resident did not provide consent. Search and rescue team should proceed with standard emergency precautions.
+                              Resident did not provide consent. Responders should proceed with standard emergency precautions.
                             </p>
                           </div>
                         )}

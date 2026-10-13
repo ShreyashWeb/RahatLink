@@ -1,7 +1,5 @@
 # RahatLink: build prompts (paste into Claude Code, Cursor, Copilot, etc.)
 
-Team CodeForge | SRIJAN 2K26 | Open Innovation
-
 How to use: paste **Prompt 0** first in every new chat/session (it is the shared context). Then run Prompts 1 to 12 in order, one per session or one after another. After each prompt, run the app and fix errors before moving on. Each prompt ends with an "Acceptance check" you can verify yourself.
 
 Rule for the whole build: the demo must work **offline on one hotspot / campus Wi-Fi with no internet**. All data in the demo is **simulated and labelled as simulated**. Never claim real-world results.
@@ -11,7 +9,7 @@ Rule for the whole build: the demo must work **offline on one hotspot / campus W
 ## Prompt 0: Master context (paste first, every time)
 
 ```
-You are helping me build "RahatLink", a hackathon project (24-36 hours, team of 3-4 students).
+You are helping me build "RahatLink", an offline-first disaster safety system.
 
 PROBLEM
 In disasters (floods, earthquakes) and everyday life, elderly, chronically ill, trapped or phone-less people cannot send an SOS. Existing SOS apps wait for the victim to call. RahatLink flips this: it notices WHO WENT SILENT. A missed daily check-in is the signal.
@@ -296,7 +294,7 @@ Finish with quality and presentation material.
 4. Write JUDGES_QA.md with short honest answers for: privacy (opt-in with consent, local-only, tiered access, log, delete), false alarms (risk scoring + human approval + seen safe), adoption (peacetime daily elder check-ins, neighbour proxy, works on existing phones), why not telecom data (needs operator access a community cannot get), what is real vs simulated, what is roadmap.
 5. Produce a one-page architecture diagram in Mermaid inside README.md matching the slides: resident PWA, neighbour proxy, volunteer PWA <-> Coordinator hub (silence detector, DBSCAN clustering, risk engine, dispatch matcher, report triage, local store + access log), with SMS and QR fallbacks.
 
-Acceptance check: a teammate who has never seen the project can run the demo from DEMO.md in under 5 minutes of setup.
+Acceptance check: a new user who has never seen the project can run the demo from DEMO.md in under 5 minutes of setup.
 ```
 
 ---
@@ -323,14 +321,14 @@ Redesign this screen to look like a polished, trustworthy emergency-response pro
 
 ---
 
-## Suggested team split (3-4 people)
+## Component Architecture Modules
 
-| Person | Prompts |
+| Module | Prompts |
 |---|---|
-| A: Core logic | 4, 5, 7 (matching), 9 (parser) |
-| B: Web/UI | 3, 6, 7 (volunteer UI), 11 |
-| C: Sync and hub | 1, 2, 8, 9 (QR) |
-| D: Demo and story | 10, 12, slides, rehearsal |
+| Core logic | 4, 5, 7 (matching), 9 (parser) |
+| Web/UI | 3, 6, 7 (volunteer UI), 11 |
+| Sync and hub | 1, 2, 8, 9 (QR) |
+| Demo and story | 10, 12, rehearsal |
 
 ## Honesty reminders for the demo
 

@@ -2,7 +2,7 @@
  * RAHATLINK • REPEATABLE FLOOD SIMULATION & BENCHMARK SUITE
  *
  * Scenario: "Riverside Flood" (deterministic PRNG seed for 100% reproducibility)
- * - 40 households in Gomti Riverbank area (Lucknow)
+ * - 40 households in Gomti Riverbank area
  * - 2 flood zone polygons (riverbank lowland + spillway overflow)
  * - 8 volunteers with diverse skills/equipment
  * - 6 households with consented health profiles
@@ -12,8 +12,6 @@
  *   --mode=measure  Headless measurement, computes metrics, writes results/sim_results.csv & json
  *   --mode=live     Live real-time feed into the running Node Hub over HTTP/WebSocket
  *   --mode=fast     Accelerated live feed (60x) into the running Node Hub
- *
- * Team CodeForge | SRIJAN 2K26
  */
 
 import * as fs from 'fs';
@@ -290,7 +288,7 @@ for (let i = 1; i <= 40; i++) {
     name: `${surname} Residence${isTrapped ? ' (Riverbank)' : ''}`,
     lat: Number(lat.toFixed(6)),
     lng: Number(lng.toFixed(6)),
-    address: `House ${10 + i}, ${i <= 6 ? 'Riverbank Colony' : 'Gomti Nagar'}, Lucknow`,
+    address: `House ${10 + i}, ${i <= 6 ? 'Riverbank Colony' : 'Gomti Nagar'}`,
     floor,
     contactPhone: `+91 98${(10000000 + i).toString().slice(0, 8)}`,
     householdSize: 1 + Math.floor(prng() * 4),
@@ -320,10 +318,10 @@ const rawSmsTemplates = [
   { text: 'pani porch tak aa gaya riverbank colony me 2 bachhe aur bujurg phanse hain turant', from: '+919811000107' },
   { text: 'riverbank sector A water level rising fast, 5 log trapped ground floor flooded jaldi', from: '+919811000108' },
   { text: 'House 13 riverbank colony doob gaya, koi phone nahi utha raha bachao', from: '+919811000109' },
-  { text: 'emergency in riverbank colony, water level 4 feet, medical team turant', from: '+919811000110' },
+  { text: 'emergency in riverbank colony, water level 4 feet, medical assistance turant', from: '+919811000110' },
 
   // Medium urgency / assistance requests
-  { text: 'drinking water khatam ho gaya Gomti nagar sector 2 me, relief team kab aayegi', from: '+919811000201' },
+  { text: 'drinking water khatam ho gaya Gomti nagar sector 2 me, relief support kab aayegi', from: '+919811000201' },
   { text: 'House 18 Srivastava ji ko BP ki dawai chahiye, medical volunteer bhejo please', from: '+919811000202' },
   { text: 'road block ho gaya hai sector A ke paas, khana aur paani chahiye', from: '+919811000203' },
   { text: 'light chali gayi 12 ghante se, battery low hai sabka help', from: '+919811000204' },
@@ -333,7 +331,7 @@ const rawSmsTemplates = [
   { text: 'barish thodi ruki hai, kya flood warning abhi bhi active hai?', from: '+919811000301' },
   { text: 'riverbank sector A road pe bohot keechad hai gaadi nahi nikal rahi', from: '+919811000302' },
   { text: 'bijli kab aayegi koi update hai kya authority se?', from: '+919811000303' },
-  { text: 'our family checked in safe from house 28, thanks rahatlink team', from: '+919811000304' },
+  { text: 'our family checked in safe from house 28, thanks rahatlink responders', from: '+919811000304' },
   { text: 'test sms checking if emergency network is receiving messages', from: '+919811000305' },
 ];
 
@@ -540,7 +538,7 @@ function runSimulation(): { results: BenchmarkResults; logs: SimulationStepLog[]
   const manualAvgDiscoveryMinutes = Math.round((trappedIds.length / (trappedIds.length + 1)) * manualTotalCallMinutes);
 
   const results: BenchmarkResults = {
-    scenarioName: 'Riverside Flood (Gomti Riverbank Lucknow)',
+    scenarioName: 'Riverside Flood (Gomti Riverbank)',
     fixedSeed: seedArg,
     totalHouseholds: households.length,
     totalTrapped: trappedIds.length,
@@ -579,7 +577,7 @@ function printResults(res: BenchmarkResults) {
   console.log('\n' + '='.repeat(88));
   console.log('  RAHATLINK • PROACTIVE SILENCE BENCHMARK (SIMULATED SCENARIO)');
   console.log(`  Scenario: ${res.scenarioName} | Fixed Seed: ${res.fixedSeed}`);
-  console.log('  SRIJAN 2K26 | Team CodeForge | Zero Paid APIs | Offline-First CRDT Architecture');
+  console.log('  Offline-First CRDT Architecture | Zero Paid APIs | Local Mesh Network');
   console.log('='.repeat(88));
 
   console.log('\n[1] CORE PROTOTYPE PERFORMANCE METRICS (SIMULATED SCENARIO):');

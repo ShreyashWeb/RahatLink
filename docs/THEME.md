@@ -1,6 +1,6 @@
 # THEME: Design system
 
-Feel: calm, trustworthy, urgent only when it must be. Matches the SRIJAN 2K26 deck.
+Feel: calm, trustworthy, urgent only when it must be.
 
 ## Colour tokens
 | Token | Hex | Use |

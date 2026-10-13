@@ -32,7 +32,7 @@ export function RoadmapModal({ isOpen, onClose }: RoadmapModalProps) {
                 Technology Architecture &amp; Future Roadmap
               </h3>
               <p className="text-[11px] text-[#6B7280]">
-                Team CodeForge • SRIJAN 2K26 Architecture Scope
+                Offline Mesh Architecture &amp; Technical Scope
               </p>
             </div>
           </div>

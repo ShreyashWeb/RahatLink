@@ -20,7 +20,7 @@ describe('@rahatlink/core smoke test', () => {
       name: 'Sharma Residence',
       lat: 26.8467,
       lng: 80.9462,
-      address: 'House 12, Gomti Nagar, Lucknow',
+      address: 'House 12, Gomti Nagar',
       floor: 1,
       contactPhone: '+919876543210',
       householdSize: 2,

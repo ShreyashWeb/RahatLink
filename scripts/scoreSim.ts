@@ -10,7 +10,7 @@ import {
 
 console.log('='.repeat(90));
 console.log('  RAHATLINK • SIMULATED RISK SCORING & DBSCAN CLUSTERING ENGINE');
-console.log('  SRIJAN 2K26 | Team CodeForge | Zero Cloud Dependencies | Pure TypeScript');
+console.log('  Offline-First Architecture | Zero Cloud Dependencies | Pure TypeScript');
 console.log('  STATUS: ALL DATA DISPLAYED BELOW IS ILLUSTRATIVE / SIMULATED');
 console.log('='.repeat(90));
 

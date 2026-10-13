@@ -8,7 +8,7 @@ const SAMPLE_HOUSEHOLDS: Household[] = [
     name: 'Sharma Residence',
     lat: 26.8467,
     lng: 80.9462,
-    address: 'House 12, Gomti Nagar, Lucknow',
+    address: 'House 12, Gomti Nagar',
     floor: 1,
     householdSize: 2,
     hasSmartphone: true,

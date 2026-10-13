@@ -1,6 +1,5 @@
-# RahatLink: Judges' Q&A Cheat Sheet
+# RahatLink: Frequently Asked Questions
 
-> **Event**: SRIJAN 2K26 | **Team**: CodeForge  
 > **Tagline**: *"Other apps wait for an SOS. RahatLink notices who went silent."*
 
 ---
@@ -38,7 +37,7 @@
 
 ### Q4. Why not just use Telecom / CDR Cell Tower Data?
 **Answer:**
-1. **Community Inaccessibility**: Telco CDR (Call Detail Record) and HLR/VLR tower dump data are legally restricted and accessible only to state intelligence and defense agencies under warrant. Community coordinators, ward corporators, and volunteer rescue teams cannot access live carrier logs.
+1. **Community Inaccessibility**: Telco CDR (Call Detail Record) and HLR/VLR tower dump data are legally restricted and accessible only to state intelligence and defense agencies under warrant. Community coordinators, ward corporators, and volunteer rescue responders cannot access live carrier logs.
 2. **Towers Fail in Disasters**: During severe floods, cyclones, or earthquakes, telecom towers lose grid power, backhaul fiber snaps, or batteries drown. In a cellular blackout, CDR data is completely blind.
 3. **Granularity**: A cell tower ping has a radius of 500m to 3km. It cannot tell you which ground-floor diabetic resident in Lane 4 is trapped under rising flood water. RahatLink operates at household-level precision over local WiFi/hotspot meshes.
 
@@ -56,7 +55,7 @@
 | **PWA & Offline Maps** | **REAL** | Service worker shell caching, Leaflet map tiles, offline fallback page. |
 | **DPDP Privacy Guard** | **REAL** | Role-based token gating, 60m expiry, audit log, break-glass reason logger. |
 | **SMS Ingestion** | **SIMULATED** | Gateway parser and deduplication logic are real; GSM carrier modem hardware is mocked via REST/mock ingestion. |
-| **Demo Households & Floods** | **SIMULATED** | 40 synthetic households and Lucknow Gomti flood polygons generated via seeded pseudo-random simulation (`scripts/simulate.ts`). |
+| **Demo Households & Floods** | **SIMULATED** | 40 synthetic households and Gomti riverbank flood polygons generated via seeded pseudo-random simulation (`scripts/simulate.ts`). |
 | **Bluetooth Mesh Transport** | **ROADMAP** | BLE GATT payload structures designed (see `docs/TRD.md`), currently bridged over WebRTC / Wi-Fi mesh. |
 
 ---

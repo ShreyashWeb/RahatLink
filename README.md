@@ -2,17 +2,15 @@
 
 > Other apps wait for an SOS. **RahatLink notices who went silent.**
 
-Team **CodeForge** | SRIJAN 2K26 | Open Innovation | SRMCEM, Lucknow
-
 RahatLink is an offline-first neighbourhood safety web application. Residents tap a daily "I'm okay" check-in. When check-ins stop, RahatLink raises a graded alert, clusters nearby silent households, ranks them with an explainable multi-factor risk score, and lets a coordinator approve volunteer dispatch. In compliance with India's DPDP Act, sensitive health records reach a volunteer only after they accept the mission, and access expires upon resolution.
 
 All demo data is **simulated**. SMS is simulated through the hub. Bluetooth mesh is on the roadmap, not built.
 
 ---
 
-## ⚡ 5-Minute Setup for New Teammates
+## ⚡ 5-Minute Quickstart
 
-A teammate who has never seen the repository can run the entire live demo in under 5 minutes:
+Anyone running the repository can execute the entire live demo in under 5 minutes:
 
 ```bash
 # 1. Clone & install dependencies
@@ -164,7 +162,3 @@ npm run sim           # Real-time interactive simulation
 - **Human Oversight**: Automated risk scoring only suggests; a human coordinator approves every dispatch.
 - **Privacy First**: Medical data is opt-in, stored locally, and masked until a volunteer accepts an approved dispatch.
 
----
-
-## 👥 Team
-**Team CodeForge** | SRIJAN 2K26

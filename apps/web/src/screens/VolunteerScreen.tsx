@@ -304,7 +304,7 @@ export function VolunteerScreen({
                 </span>
               </div>
               <p className="text-xs text-[#6B7280]">
-                Field Responder App • Offline IndexedDB Sync • SRIJAN 2K26
+                Field Responder App • Offline IndexedDB Sync
               </p>
             </div>
           </div>

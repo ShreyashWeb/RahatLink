@@ -163,7 +163,7 @@ export function CoordinatorMap({
       <div className="absolute top-3 left-3 right-3 z-[1000] flex items-center justify-between gap-2 pointer-events-none">
         <div className="bg-white/95 backdrop-blur-sm border border-[#F1D5BF] px-3 py-1.5 rounded-2xl shadow-sm text-xs font-bold text-[#0B1B3A] flex items-center gap-2 pointer-events-auto">
           <Layers className="w-3.5 h-3.5 text-[#F26A1B]" />
-          <span>Lucknow Demo Sector (Gomti Nagar)</span>
+          <span>Riverside Demo Sector</span>
         </div>
 
         <button

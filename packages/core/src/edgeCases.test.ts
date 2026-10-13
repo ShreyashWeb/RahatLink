@@ -410,7 +410,7 @@ describe('Exhaustive Edge Cases & Quality Suite (packages/core)', () => {
           name: `Family ${i}`,
           lat: 26.85 + i * 0.001,
           lng: 80.95 + i * 0.001,
-          address: `House number ${i}, Gomti Sector ${i % 5}, Lucknow`,
+          address: `House number ${i}, Sector ${i % 5}`,
         })),
       };
 

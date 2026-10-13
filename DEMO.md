@@ -1,9 +1,8 @@
 # RahatLink: 3-Minute Live Demo Script
 
 > **Tagline**: *"Other apps wait for an SOS. RahatLink notices who went silent."*  
-> **Team**: CodeForge | **Event**: SRIJAN 2K26  
-> **Target Audience**: Judges, Disaster Coordinators, Community Volunteers  
-> **Pre-requisite Setup**: Under 3 minutes (see [Quickstart](#5-minute-setup-for-new-teammates))
+> **Target Audience**: Disaster Coordinators, Community Responders, Evaluators  
+> **Pre-requisite Setup**: Under 3 minutes (see [Quickstart](#5-minute-quickstart))
 
 ---
 
@@ -72,7 +71,7 @@
      - *Cluster A: 6 households silent | Mean silence: 4.8h | High density (DBSCAN $\epsilon=300m$)*.
   4. Point out: **0 SOS messages were received**.
 - **Presenter says**:
-  > *"Look at the map. Zero SOS calls have come through the network. But RahatLink's density-based DBSCAN spatial engine already grouped 6 neighbouring houses whose check-ins lapsed together. While other rescue teams are still waiting for 112 calls, our coordinator already knows Sector 4 has suffered a localized cutoff."*
+  > *"Look at the map. Zero SOS calls have come through the network. But RahatLink's density-based DBSCAN spatial engine already grouped 6 neighbouring houses whose check-ins lapsed together. While other rescue operations are still waiting for 112 calls, our coordinator already knows Sector 4 has suffered a localized cutoff."*
 
 ---
 
@@ -124,7 +123,7 @@
 
 ---
 
-## ⚡ 5-Minute Setup for New Teammates
+## ⚡ 5-Minute Quickstart
 
 Follow these exact steps on any Windows, macOS, or Linux machine:
 
