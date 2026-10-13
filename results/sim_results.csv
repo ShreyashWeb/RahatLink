@@ -1,0 +1,13 @@
+metric_name,value,unit,scenario,seed,label
+detection_rate,100.00,percent,riverside_flood,42,simulated_scenario
+trapped_detected,6,households,riverside_flood,42,simulated_scenario
+total_trapped,6,households,riverside_flood,42,simulated_scenario
+false_alarms_triggered,2,households,riverside_flood,42,simulated_scenario
+false_alarms_cleared,1,households,riverside_flood,42,simulated_scenario
+net_false_alarms,1,households,riverside_flood,42,simulated_scenario
+time_to_flag_median,1080,minutes,riverside_flood,42,simulated_scenario
+time_to_flag_mean,1080,minutes,riverside_flood,42,simulated_scenario
+manual_baseline_sweep_time,240,minutes,riverside_flood,42,simulated_scenario
+manual_calls_required,40,calls,riverside_flood,42,simulated_scenario
+rahatlink_calls_required,0,calls,riverside_flood,42,simulated_scenario
+workload_reduction,98,percent,riverside_flood,42,simulated_scenario

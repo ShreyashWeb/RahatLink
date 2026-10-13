@@ -8,9 +8,12 @@ import {
   handleYjsSyncConnection,
   evaluateAllHouseholds,
   hubDoc,
+  hubHealthDoc,
   householdsMap,
+  volunteersMap,
   tasksMap,
   reportsArray,
+  floodZonesArray,
   accessLogArray,
   notificationsArray,
   healthProfilesMap,
@@ -75,6 +78,54 @@ app.post('/api/silence/evaluate', (req, res) => {
     timestamp: evalDate.toISOString(),
     householdsCount: householdsMap.size,
     notificationsCount: notificationsArray.length,
+  });
+});
+
+// Bulk seed endpoint for reproducible simulations
+app.post('/api/simulation/seed', (req, res) => {
+  const { households, floodZones, volunteers, healthProfiles, settings, reset } = req.body || {};
+  hubDoc.transact(() => {
+    if (reset) {
+      householdsMap.clear();
+      reportsArray.delete(0, reportsArray.length);
+      tasksMap.clear();
+      volunteersMap.clear();
+      floodZonesArray.delete(0, floodZonesArray.length);
+      notificationsArray.delete(0, notificationsArray.length);
+    }
+    if (Array.isArray(households)) {
+      for (const h of households) {
+        householdsMap.set(h.id, h);
+      }
+    }
+    if (Array.isArray(volunteers)) {
+      for (const v of volunteers) {
+        volunteersMap.set(v.id, v);
+      }
+    }
+    if (Array.isArray(floodZones)) {
+      floodZonesArray.push(floodZones);
+    }
+    if (settings && typeof settings === 'object') {
+      for (const [k, v] of Object.entries(settings)) {
+        settingsMap.set(k, v);
+      }
+    }
+  });
+
+  if (Array.isArray(healthProfiles)) {
+    hubHealthDoc.transact(() => {
+      for (const hp of healthProfiles) {
+        healthProfilesMap.set(hp.householdId, hp);
+      }
+    });
+  }
+
+  res.json({
+    success: true,
+    householdsCount: householdsMap.size,
+    volunteersCount: volunteersMap.size,
+    floodZonesCount: floodZonesArray.length,
   });
 });
 

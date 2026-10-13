@@ -16,7 +16,7 @@ Rule: finish each task's acceptance check before moving on. Commit after every t
 - [x] T9 SMS parser, triage screen, QR sync (Prompt 9). Check: Hinglish NLP extracts needs & urgency; QR stream merges tasks.
 
 ## Phase 3: Proof and polish (hours 18-24)
-- [ ] T10 Flood simulator and measure mode (Prompt 10). Check: identical numbers on re-run.
+- [x] T10 Flood simulator and measure mode (Prompt 10). Check: identical numbers on re-run; writes results/sim_results.csv.
 - [ ] T11 PWA, offline hardening, accessibility, visual polish (Prompt 11). Check: airplane mode works after first load.
 
 ## Phase 4: Ship (last 6 hours, no new features)

@@ -12,6 +12,9 @@
     "dev:hub": "npm run dev --workspace=@rahatlink/hub",
     "dev": "concurrently -k -n \"web,hub\" -c \"cyan,magenta\" \"npm run dev:web\" \"npm run dev:hub\"",
     "test": "npm run test --workspace=@rahatlink/core",
+    "sim": "tsx scripts/simulate.ts --mode=live",
+    "sim:fast": "tsx scripts/simulate.ts --mode=fast",
+    "sim:measure": "tsx scripts/simulate.ts --mode=measure",
     "sim:score": "tsx scripts/scoreSim.ts",
     "build": "npm run build --workspaces"
   },
