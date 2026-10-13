@@ -13,6 +13,7 @@ import {
   addCheckIn,
   addReport,
   upsertHousehold,
+  upsertVolunteer,
   updateTask,
   updateSettings,
   logAccess,
@@ -24,6 +25,7 @@ import { UserRole, OnboardingModal } from './components/OnboardingModal';
 import { ResidentScreen } from './screens/ResidentScreen';
 import { NeighbourScreen } from './screens/NeighbourScreen';
 import { CoordinatorScreen } from './screens/CoordinatorScreen';
+import { VolunteerScreen } from './screens/VolunteerScreen';
 import {
   Shield,
   Radio,
@@ -246,7 +248,7 @@ export default function App() {
           />
         )}
 
-        {(role === 'coordinator' || role === 'volunteer') && (
+        {role === 'coordinator' && (
           <CoordinatorScreen
             households={households}
             checkIns={checkIns}
@@ -264,6 +266,19 @@ export default function App() {
             onUpsertHousehold={upsertHousehold}
             onUpdateTask={updateTask}
             onLogAccess={logAccess}
+          />
+        )}
+
+        {role === 'volunteer' && (
+          <VolunteerScreen
+            volunteers={volunteers}
+            tasks={tasks}
+            households={households}
+            onUpdateVolunteer={upsertVolunteer}
+            onUpdateTask={updateTask}
+            onMarkSeenSafe={handleMarkSeenSafe}
+            onLogAccess={logAccess}
+            onSendReport={handleSendReport}
           />
         )}
       </main>

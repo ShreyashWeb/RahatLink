@@ -15,7 +15,7 @@ import type {
 import {
   clusterFlaggedHouseholds,
   scoreHousehold,
-  haversine,
+  rankVolunteers,
 } from '@rahatlink/core';
 import { getHealthProfile } from '../store';
 import { CoordinatorMap } from '../components/CoordinatorMap';
@@ -1063,22 +1063,31 @@ export function CoordinatorScreen({
               </p>
             </div>
 
-            {/* Candidate Volunteers List sorted by distance */}
-            <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
-              {volunteers.map((v) => {
-                const targetH = households.find((h) => h.id === matchingTask.householdIds[0]);
-                const distMeters = targetH
-                  ? Math.round(haversine(targetH, { lat: v.lat, lng: v.lng }))
-                  : 500;
+            {/* Candidate Volunteers List sorted by fit score */}
+            <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+              {(() => {
+                const dummyTask: Task = {
+                  id: matchingTask.id,
+                  householdIds: matchingTask.householdIds,
+                  riskTier: matchingTask.riskTier,
+                  score: matchingTask.score,
+                  breakdown: matchingTask.breakdown,
+                  status: 'approved',
+                  createdAt: new Date().toISOString(),
+                };
+                const rankedList = rankVolunteers(dummyTask, volunteers, households);
 
-                return (
+                return rankedList.map(({ volunteer: v, fitScore, breakdown }: any) => (
                   <div
                     key={v.id}
                     className="border border-[#F1D5BF] rounded-2xl p-3 flex items-center justify-between gap-3 hover:bg-gray-50 transition-colors"
                   >
-                    <div>
+                    <div className="space-y-1">
                       <div className="font-bold text-xs text-[#0B1B3A] flex items-center gap-2">
                         <span>{v.name}</span>
+                        <span className="bg-[#0B1B3A] text-white text-[10px] font-black px-1.5 py-0.5 rounded">
+                          Fit: {fitScore}/100
+                        </span>
                         <span
                           className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
                             v.available
@@ -1089,11 +1098,11 @@ export function CoordinatorScreen({
                           {v.available ? 'Available' : 'Assigned'}
                         </span>
                       </div>
-                      <div className="text-[11px] text-[#6B7280] mt-0.5">
-                        Distance: ~{distMeters}m away • Skills: {v.skills.join(', ')}
+                      <div className="text-[11px] text-[#6B7280]">
+                        Distance: ~{breakdown.distanceMeters}m (+{breakdown.distanceScore} pts) • Skills: {v.skills.join(', ')} (+{breakdown.skillsScore} pts)
                       </div>
                       <div className="text-[10px] text-[#6B7280]">
-                        Equipment: {v.equipment.join(', ')}
+                        Equipment: {v.equipment.join(', ')} (+{breakdown.equipmentScore} pts)
                       </div>
                     </div>
 
@@ -1105,8 +1114,8 @@ export function CoordinatorScreen({
                       Dispatch
                     </button>
                   </div>
-                );
-              })}
+                ));
+              })()}
             </div>
 
             <div className="flex justify-end pt-2 border-t border-gray-100">

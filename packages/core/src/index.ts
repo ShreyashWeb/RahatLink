@@ -2,6 +2,7 @@ export * from './types';
 export * from './silence';
 export * from './cluster';
 export * from './risk';
+export * from './match';
 
 export const DEFAULT_RISK_WEIGHTS = {
   silenceBeyondGrace: 25,
