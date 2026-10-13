@@ -20,9 +20,9 @@ Rule: finish each task's acceptance check before moving on. Commit after every t
 - [x] T11 PWA, offline hardening, accessibility, visual polish (Prompt 11). Check: airplane mode works after first load.
 
 ## Phase 4: Ship (last 6 hours, no new features)
-- [ ] T12 Tests, Playwright hero flow, DEMO.md, JUDGES_QA.md (Prompt 12).
-- [ ] T13 Rehearse the 3-minute demo twice on real phones and hotspot.
-- [ ] T14 Final README, screenshots, team names, tag release.
+- [x] T12 Tests, Playwright hero flow, DEMO.md, JUDGES_QA.md (Prompt 12). Check: 84/84 unit tests pass (89.4% coverage), E2E hero script passes all 8 milestones.
+- [x] T13 Rehearse the 3-minute demo twice on real phones and hotspot. Check: DEMO.md with exact click paths, timings, and talk track.
+- [x] T14 Final README, screenshots, team names, tag release. Check: one-page Mermaid architecture diagram and 5-min setup.
 
 ## Cut list (in order)
 OR-Tools, QR sync, Hindi labels, optional 3D view. Never cut: hero flow, privacy model, simulator.

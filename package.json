@@ -12,6 +12,7 @@
     "dev:hub": "npm run dev --workspace=@rahatlink/hub",
     "dev": "concurrently -k -n \"web,hub\" -c \"cyan,magenta\" \"npm run dev:web\" \"npm run dev:hub\"",
     "test": "npm run test --workspace=@rahatlink/core",
+    "test:e2e": "tsx scripts/e2e_hero.ts",
     "sim": "tsx scripts/simulate.ts --mode=live",
     "sim:fast": "tsx scripts/simulate.ts --mode=fast",
     "sim:measure": "tsx scripts/simulate.ts --mode=measure",
@@ -22,6 +23,7 @@
     "@types/pako": "^2.0.4",
     "@types/qrcode": "^1.5.6",
     "concurrently": "^9.1.2",
+    "playwright": "^1.64.0",
     "tsx": "^4.23.15",
     "typescript": "^5.7.3"
   },
