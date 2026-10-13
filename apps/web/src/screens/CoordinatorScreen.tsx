@@ -103,6 +103,7 @@ export function CoordinatorScreen({
 }: CoordinatorScreenProps) {
   const [selectedHouseholdId, setSelectedHouseholdId] = useState<string | undefined>('h-103');
   const [expandedTaskIds, setExpandedTaskIds] = useState<Set<string>>(new Set(['task-cluster-1']));
+  const [taskFilter, setTaskFilter] = useState<'all' | 'active' | 'resolved'>('all');
   const [isFeedOpen, setIsFeedOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -390,6 +391,16 @@ export function CoordinatorScreen({
     settings,
     tasks,
   ]);
+
+  const displayedTasks = useMemo(() => {
+    if (taskFilter === 'active') {
+      return rankedTasks.filter((t) => t.status !== 'resolved' && t.status !== 'cancelled');
+    }
+    if (taskFilter === 'resolved') {
+      return rankedTasks.filter((t) => t.status === 'resolved' || t.status === 'cancelled');
+    }
+    return rankedTasks;
+  }, [rankedTasks, taskFilter]);
 
   // Metric counts
   const flaggedCount = households.filter((h) => h.status === 'flagged').length;
@@ -681,15 +692,17 @@ export function CoordinatorScreen({
           <button
             type="button"
             onClick={() => onUpdateSettings({ disasterMode: !settings.disasterMode })}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border shadow-sm ${
               settings.disasterMode
-                ? 'bg-red-600 text-white border-red-700 shadow-md animate-pulse'
+                ? 'bg-[#B91C1C] text-white border-[#7F1D1D] shadow-md ring-2 ring-red-300'
                 : 'bg-[#FFF6EE] text-[#0B1B3A] border-[#F1D5BF] hover:bg-[#FDE8D7]'
             }`}
             title="Halves check-in grace period and heightens clustering urgency"
           >
-            <Flame className={`w-4 h-4 ${settings.disasterMode ? 'text-amber-300' : 'text-[#F26A1B]'}`} />
-            <span>Disaster Mode: {settings.disasterMode ? 'ACTIVE (0.5x Grace)' : 'STANDBY'}</span>
+            <Flame className={`w-4 h-4 ${settings.disasterMode ? 'text-amber-200 animate-pulse' : 'text-[#F26A1B]'}`} />
+            <span className="font-extrabold">
+              Disaster Mode: {settings.disasterMode ? 'ACTIVE (0.5x Grace)' : 'STANDBY'}
+            </span>
           </button>
 
           {/* Dev Fast-Forward 60x Button */}
@@ -908,45 +921,88 @@ export function CoordinatorScreen({
         {/* RIGHT COLUMN: Ranked Dispatch Queue (5 cols) */}
         <div className="lg:col-span-5 flex flex-col space-y-3">
           {/* Header */}
-          <div className="bg-white border border-[#F1D5BF] rounded-2xl p-3.5 shadow-sm flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Activity className="w-4 h-4 text-[#F26A1B]" />
-              <h3 className="text-sm font-bold text-[#0B1B3A]">
-                Ranked Dispatch Tasks ({rankedTasks.length})
-              </h3>
+          <div className="bg-white border border-[#F1D5BF] rounded-2xl p-3.5 shadow-sm space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Activity className="w-4 h-4 text-[#F26A1B]" />
+                <h3 className="text-sm font-bold text-[#0B1B3A]">
+                  Ranked Dispatch Tasks ({rankedTasks.length})
+                </h3>
+              </div>
+              <span className="text-[11px] font-semibold text-[#6B7280]">
+                Sorted by Risk Score
+              </span>
             </div>
-            <span className="text-[11px] font-semibold text-[#6B7280]">
-              Sorted by Risk Score
-            </span>
+
+            {/* Filter Tabs */}
+            <div className="flex items-center gap-1.5 pt-2 border-t border-gray-100 text-xs">
+              <button
+                type="button"
+                onClick={() => setTaskFilter('all')}
+                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
+                  taskFilter === 'all'
+                    ? 'bg-[#0B1B3A] text-white shadow-xs'
+                    : 'bg-[#FFF6EE] text-[#0B1B3A] hover:bg-[#FDE8D7]'
+                }`}
+              >
+                All ({rankedTasks.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setTaskFilter('active')}
+                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
+                  taskFilter === 'active'
+                    ? 'bg-[#0B1B3A] text-white shadow-xs'
+                    : 'bg-[#FFF6EE] text-[#0B1B3A] hover:bg-[#FDE8D7]'
+                }`}
+              >
+                Active ({rankedTasks.filter((t) => t.status !== 'resolved' && t.status !== 'cancelled').length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setTaskFilter('resolved')}
+                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
+                  taskFilter === 'resolved'
+                    ? 'bg-[#0B1B3A] text-white shadow-xs'
+                    : 'bg-[#FFF6EE] text-[#0B1B3A] hover:bg-[#FDE8D7]'
+                }`}
+              >
+                Resolved ({rankedTasks.filter((t) => t.status === 'resolved' || t.status === 'cancelled').length})
+              </button>
+            </div>
           </div>
 
           {/* Task Cards List */}
-          {rankedTasks.length === 0 ? (
+          {displayedTasks.length === 0 ? (
             /* 7. Empty State */
             <div className="bg-white border border-[#F1D5BF] rounded-3xl p-8 shadow-sm text-center space-y-3">
               <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-[#0F7A5F] flex items-center justify-center mx-auto border border-emerald-200">
                 <CheckCircle2 className="w-7 h-7" />
               </div>
               <h4 className="text-base font-bold text-[#0B1B3A]">
-                All Households Checked In & Safe
+                {taskFilter === 'resolved' ? 'No Resolved Tasks Yet' : 'All Households Checked In & Safe'}
               </h4>
               <p className="text-xs text-[#6B7280] max-w-xs mx-auto">
-                No households are currently overdue or silent beyond their grace window.
+                {taskFilter === 'resolved'
+                  ? 'Completed tasks will be archived here once volunteers finish their missions.'
+                  : 'No households are currently overdue or silent beyond their grace window.'}
               </p>
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={() => handleFastForwardJump(36)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold bg-[#FFF6EE] border border-[#F1D5BF] text-[#F26A1B] hover:bg-[#FDE8D7] transition-colors inline-flex items-center gap-1.5"
-                >
-                  <FastForward className="w-3.5 h-3.5" />
-                  <span>Simulate 36h Silence Escalation</span>
-                </button>
-              </div>
+              {taskFilter !== 'resolved' && (
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => handleFastForwardJump(36)}
+                    className="px-4 py-2 rounded-xl text-xs font-bold bg-[#FFF6EE] border border-[#F1D5BF] text-[#F26A1B] hover:bg-[#FDE8D7] transition-colors inline-flex items-center gap-1.5"
+                  >
+                    <FastForward className="w-3.5 h-3.5" />
+                    <span>Simulate 36h Silence Escalation</span>
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-3 max-h-[640px] overflow-y-auto pr-1">
-              {rankedTasks.map((task) => {
+              {displayedTasks.map((task) => {
                 const isExpanded = expandedTaskIds.has(task.id);
                 const isSelected = task.householdIds.includes(selectedHouseholdId || '');
 
@@ -977,7 +1033,7 @@ export function CoordinatorScreen({
                     key={task.id}
                     className={`bg-white border rounded-2xl p-4 shadow-sm transition-all space-y-3 ${
                       isSelected ? 'ring-2 ring-[#0B1B3A] border-[#0B1B3A]' : 'border-[#F1D5BF]'
-                    } ${tierStyles.border} ${isResolved ? 'opacity-65' : ''}`}
+                    } ${tierStyles.border}`}
                   >
                     {/* Top Row: Tier Badge + Score + Status */}
                     <div className="flex items-center justify-between gap-2">
@@ -1137,72 +1193,89 @@ export function CoordinatorScreen({
                       )}
                     </div>
 
-                    {/* Actions per Task: Approve / Override / Seen Safe / Cancel */}
-                    <div className="pt-2 border-t border-gray-100 flex flex-wrap items-center gap-1.5">
-                      {/* Approve Button */}
-                      <button
-                        type="button"
-                        onClick={() => handleApprove(task)}
-                        disabled={task.status === 'resolved'}
-                        className="flex-1 min-w-[90px] px-2.5 py-1.5 rounded-xl text-xs font-bold bg-[#0F7A5F] hover:bg-[#0c624c] text-white transition-all shadow-sm flex items-center justify-center gap-1 disabled:opacity-50"
-                        title="Approve dispatch and match available volunteer"
-                      >
-                        <Check className="w-3.5 h-3.5" />
-                        <span>Approve</span>
-                      </button>
+                    {/* Actions per Task: Active vs Resolved */}
+                    {isResolved ? (
+                      <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-xs bg-emerald-50/80 border border-emerald-200/80 p-2.5 rounded-xl shadow-xs">
+                        <div className="flex items-center gap-1.5 text-emerald-900 font-bold text-xs">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>Task Completed &amp; Resolved</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const existing = tasks.find((t) => t.id === task.id);
+                            if (existing) {
+                              onUpdateTask({ ...existing, status: 'approved' });
+                            }
+                          }}
+                          className="px-3 py-1 text-xs font-bold bg-white text-[#0B1B3A] border border-emerald-300 rounded-lg hover:bg-emerald-100 transition-colors shadow-xs"
+                          title="Reopen dispatch task if further support is required"
+                        >
+                          Reopen Task
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="pt-2 border-t border-gray-100 flex flex-wrap items-center gap-1.5">
+                        {/* Approve Button */}
+                        <button
+                          type="button"
+                          onClick={() => handleApprove(task)}
+                          className="flex-1 min-w-[90px] px-2.5 py-1.5 rounded-xl text-xs font-bold bg-[#0F7A5F] hover:bg-[#0c624c] text-white transition-all shadow-sm flex items-center justify-center gap-1"
+                          title="Approve dispatch and match available volunteer"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Approve</span>
+                        </button>
 
-                      {/* Override Button */}
-                      <button
-                        type="button"
-                        onClick={() => handleOpenOverride(task)}
-                        disabled={task.status === 'resolved'}
-                        className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-white border border-[#F1D5BF] hover:bg-gray-50 text-[#0B1B3A] transition-all flex items-center justify-center gap-1 disabled:opacity-50"
-                        title="Override risk tier with required reason"
-                      >
-                        <Edit3 className="w-3.5 h-3.5 text-purple-600" />
-                        <span>Override</span>
-                      </button>
+                        {/* Override Button */}
+                        <button
+                          type="button"
+                          onClick={() => handleOpenOverride(task)}
+                          className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-white border border-[#F1D5BF] hover:bg-gray-50 text-[#0B1B3A] transition-all flex items-center justify-center gap-1"
+                          title="Override risk tier with required reason"
+                        >
+                          <Edit3 className="w-3.5 h-3.5 text-purple-600" />
+                          <span>Override</span>
+                        </button>
 
-                      {/* Seen Safe Button */}
-                      <button
-                        type="button"
-                        onClick={() => handleSeenSafeTask(task)}
-                        disabled={task.status === 'resolved'}
-                        className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-[#2F6FDE] hover:bg-[#255ac0] text-white transition-all shadow-sm flex items-center justify-center gap-1 disabled:opacity-50"
-                        title="Neighbour or volunteer confirmed household is safe; resets silence clock and clears flag"
-                      >
-                        <Shield className="w-3.5 h-3.5" />
-                        <span>Seen Safe</span>
-                      </button>
+                        {/* Seen Safe Button */}
+                        <button
+                          type="button"
+                          onClick={() => handleSeenSafeTask(task)}
+                          className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-[#2F6FDE] hover:bg-[#255ac0] text-white transition-all shadow-sm flex items-center justify-center gap-1"
+                          title="Neighbour or volunteer confirmed household is safe; resets silence clock and clears flag"
+                        >
+                          <Shield className="w-3.5 h-3.5" />
+                          <span>Seen Safe</span>
+                        </button>
 
-                      {/* Break-Glass Emergency Exemption */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setBreakGlassTask(task);
-                          setBreakGlassReason('');
-                          setBreakGlassResult(null);
-                          setBreakGlassError('');
-                        }}
-                        disabled={task.status === 'resolved' || task.status === 'cancelled'}
-                        className="px-2 py-1.5 rounded-xl text-xs font-bold bg-rose-50 border border-rose-300 hover:bg-rose-100 text-rose-800 transition-all flex items-center justify-center gap-1 disabled:opacity-40"
-                        title="Emergency life-safety break-glass exemption (DPDP Act)"
-                      >
-                        <Unlock className="w-3.5 h-3.5 text-rose-600" />
-                        <span>Break-Glass</span>
-                      </button>
+                        {/* Break-Glass Emergency Exemption */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBreakGlassTask(task);
+                            setBreakGlassReason('');
+                            setBreakGlassResult(null);
+                            setBreakGlassError('');
+                          }}
+                          className="px-2 py-1.5 rounded-xl text-xs font-bold bg-rose-50 border border-rose-300 hover:bg-rose-100 text-rose-800 transition-all flex items-center justify-center gap-1"
+                          title="Emergency life-safety break-glass exemption (DPDP Act)"
+                        >
+                          <Unlock className="w-3.5 h-3.5 text-rose-600" />
+                          <span>Break-Glass</span>
+                        </button>
 
-                      {/* Cancel Button */}
-                      <button
-                        type="button"
-                        onClick={() => handleCancelTask(task)}
-                        disabled={task.status === 'cancelled' || task.status === 'resolved'}
-                        className="px-2 py-1.5 rounded-xl text-xs font-semibold text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-30"
-                        title="Cancel task"
-                      >
-                        <XCircle className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                        {/* Cancel Button */}
+                        <button
+                          type="button"
+                          onClick={() => handleCancelTask(task)}
+                          className="px-2 py-1.5 rounded-xl text-xs font-semibold text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+                          title="Dismiss task"
+                        >
+                          <XCircle className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
               })}

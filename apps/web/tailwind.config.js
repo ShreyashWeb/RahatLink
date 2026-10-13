@@ -6,10 +6,13 @@ export default {
       colors: {
         navy: '#0B1B3A',
         orange: '#F26A1B',
-        blue: '#2F6FDE',
-        green: '#0F7A5F',
-        red: '#B91C1C',
-        amber: '#D97706',
+        brand: {
+          navy: '#0B1B3A',
+          orange: '#F26A1B',
+          blue: '#2F6FDE',
+          green: '#0F7A5F',
+          red: '#B91C1C',
+        },
         rust: '#C2500F',
         cream: '#FFF6EE',
         peach: '#FDE8D7',
