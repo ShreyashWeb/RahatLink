@@ -1,4 +1,5 @@
 export * from './types';
+export * from './silence';
 
 export const DEFAULT_RISK_WEIGHTS = {
   silenceBeyondGrace: 25,

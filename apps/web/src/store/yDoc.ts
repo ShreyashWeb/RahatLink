@@ -11,6 +11,7 @@ import type {
   Task,
   AccessLogEntry,
   FloodZone,
+  AppNotification,
 } from '@rahatlink/core';
 import { DEFAULT_SETTINGS } from '@rahatlink/core';
 
@@ -24,6 +25,7 @@ export const reportsArray = doc.getArray<Report>('reports');
 export const volunteersMap = doc.getMap<Volunteer>('volunteers');
 export const tasksMap = doc.getMap<Task>('tasks');
 export const accessLogArray = doc.getArray<AccessLogEntry>('accessLog');
+export const notificationsArray = doc.getArray<AppNotification>('notifications');
 export const settingsMap = doc.getMap<any>('settings');
 export const floodZonesArray = doc.getArray<FloodZone>('floodZones');
 

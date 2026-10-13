@@ -7,8 +7,9 @@ import type {
   Report,
   AccessLogEntry,
   Settings,
+  AppNotification,
 } from '@rahatlink/core';
-import { DEFAULT_SETTINGS } from '@rahatlink/core';
+import { DEFAULT_SETTINGS, evaluateHousehold } from '@rahatlink/core';
 import {
   doc,
   householdsMap,
@@ -17,6 +18,7 @@ import {
   volunteersMap,
   reportsArray,
   accessLogArray,
+  notificationsArray,
   settingsMap,
   subscribeSyncState,
   getSyncState,
@@ -150,6 +152,83 @@ export function useSettings(): Settings {
   }, []);
 
   return settings;
+}
+
+// Hook 8: useNotifications
+export function useNotifications(): AppNotification[] {
+  const [notifications, setNotifications] = useState<AppNotification[]>(() => {
+    return notificationsArray.toArray();
+  });
+
+  useEffect(() => {
+    const update = () => {
+      setNotifications(notificationsArray.toArray());
+    };
+    notificationsArray.observe(update);
+    return () => {
+      notificationsArray.unobserve(update);
+    };
+  }, []);
+
+  return notifications;
+}
+
+/**
+ * Run silence engine evaluation across all households
+ */
+export function runSilenceEvaluation(now: Date = new Date()) {
+  const currentSettings = {
+    ...DEFAULT_SETTINGS,
+    ...settingsMap.toJSON(),
+  };
+
+  const households = Array.from(householdsMap.values());
+  doc.transact(() => {
+    for (const h of households) {
+      const evaluation = evaluateHousehold(h, now, currentSettings);
+      if (evaluation.status !== h.status) {
+        householdsMap.set(h.id, {
+          ...h,
+          status: evaluation.status,
+        });
+
+        if (evaluation.status === 'reminded') {
+          notificationsArray.push([
+            {
+              id: `notif-remind-${Date.now()}-${h.id}`,
+              householdId: h.id,
+              householdName: h.name,
+              type: 'reminded',
+              message: `Check-in grace expired. Automated SMS reminder sent to ${h.name}.`,
+              at: now.toISOString(),
+            },
+          ]);
+        } else if (evaluation.status === 'pinged') {
+          notificationsArray.push([
+            {
+              id: `notif-ping-${Date.now()}-${h.id}`,
+              householdId: h.id,
+              householdName: h.name,
+              type: 'pinged',
+              message: `No response to reminder. Welfare check assigned to nearby neighbour for ${h.name}.`,
+              at: now.toISOString(),
+            },
+          ]);
+        } else if (evaluation.status === 'flagged') {
+          notificationsArray.push([
+            {
+              id: `notif-flag-${Date.now()}-${h.id}`,
+              householdId: h.id,
+              householdName: h.name,
+              type: 'flagged',
+              message: `Household ${h.name} is FLAGGED. Entered clustering & risk queue.`,
+              at: now.toISOString(),
+            },
+          ]);
+        }
+      }
+    }
+  });
 }
 
 // ==========================================

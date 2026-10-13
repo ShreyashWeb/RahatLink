@@ -150,8 +150,19 @@ export interface RiskWeights {
   [key: string]: number;
 }
 
+export interface AppNotification {
+  id: string;
+  householdId: string;
+  householdName: string;
+  type: 'reminded' | 'pinged' | 'flagged' | 'seenSafe';
+  message: string;
+  at: string;
+}
+
 export interface Settings {
   disasterMode: boolean;
   disasterGraceFactor: number;
   weights: RiskWeights;
+  clockSpeedMultiplier?: number;
+  clockOffsetMs?: number;
 }

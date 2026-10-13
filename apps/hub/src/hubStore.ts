@@ -16,8 +16,9 @@ import type {
   AccessLogEntry,
   FloodZone,
   Settings,
+  AppNotification,
 } from '@rahatlink/core';
-import { DEFAULT_SETTINGS } from '@rahatlink/core';
+import { DEFAULT_SETTINGS, evaluateHousehold } from '@rahatlink/core';
 
 const messageSync = 0;
 const messageAwareness = 1;
@@ -41,6 +42,7 @@ export const reportsArray = hubDoc.getArray<Report>('reports');
 export const volunteersMap = hubDoc.getMap<Volunteer>('volunteers');
 export const tasksMap = hubDoc.getMap<Task>('tasks');
 export const accessLogArray = hubDoc.getArray<AccessLogEntry>('accessLog');
+export const notificationsArray = hubDoc.getArray<AppNotification>('notifications');
 export const settingsMap = hubDoc.getMap<any>('settings');
 export const floodZonesArray = hubDoc.getArray<FloodZone>('floodZones');
 
@@ -101,6 +103,74 @@ export function initPersistence() {
       }
     }
   }, 10000);
+
+  // Start 30s silence engine evaluation job
+  startSilenceEngineJob();
+}
+
+/**
+ * Headless silence engine evaluation on the hub
+ */
+export function evaluateAllHouseholds(now: Date = new Date()) {
+  const currentSettings: Settings = {
+    ...DEFAULT_SETTINGS,
+    ...settingsMap.toJSON(),
+  };
+
+  const households = Array.from(householdsMap.values());
+  for (const h of households) {
+    const evaluation = evaluateHousehold(h, now, currentSettings);
+    if (evaluation.status !== h.status) {
+      const prevStatus = h.status;
+      householdsMap.set(h.id, {
+        ...h,
+        status: evaluation.status,
+      });
+
+      console.log(`[Silence Engine] Household ${h.id} (${h.name}) transitioned: ${prevStatus} ➔ ${evaluation.status}`);
+
+      // Simulated notifications for transition events
+      if (evaluation.status === 'reminded') {
+        const notif: AppNotification = {
+          id: `notif-remind-${Date.now()}-${h.id}`,
+          householdId: h.id,
+          householdName: h.name,
+          type: 'reminded',
+          message: `Check-in grace expired. Automated SMS reminder sent to ${h.name} (${h.contactPhone}).`,
+          at: now.toISOString(),
+        };
+        notificationsArray.push([notif]);
+      } else if (evaluation.status === 'pinged') {
+        const notif: AppNotification = {
+          id: `notif-ping-${Date.now()}-${h.id}`,
+          householdId: h.id,
+          householdName: h.name,
+          type: 'pinged',
+          message: `No response to reminder. Welfare check assigned to nearby neighbour for ${h.name} (${h.address}).`,
+          at: now.toISOString(),
+        };
+        notificationsArray.push([notif]);
+      } else if (evaluation.status === 'flagged') {
+        const notif: AppNotification = {
+          id: `notif-flag-${Date.now()}-${h.id}`,
+          householdId: h.id,
+          householdName: h.name,
+          type: 'flagged',
+          message: `Household ${h.name} FLAGGED: Silence ladder exhausted. Queued for DBSCAN clustering and risk scoring.`,
+          at: now.toISOString(),
+        };
+        notificationsArray.push([notif]);
+      }
+    }
+  }
+}
+
+export function startSilenceEngineJob() {
+  console.log('[RahatLink Hub] Starting 30s Silence Engine background job...');
+  evaluateAllHouseholds();
+  setInterval(() => {
+    evaluateAllHouseholds();
+  }, 30000);
 }
 
 // Track local doc mutations to trigger periodic persistence and broadcast updates

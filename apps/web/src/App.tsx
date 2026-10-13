@@ -5,11 +5,13 @@ import {
   useHouseholds,
   useCheckIns,
   useReports,
+  useNotifications,
   useSettings,
   addCheckIn,
   addReport,
   upsertHousehold,
   updateSettings,
+  runSilenceEvaluation,
   seedDemoDataIfEmpty,
 } from './store';
 import { translations, Language } from './i18n';
@@ -32,6 +34,7 @@ export default function App() {
   const households = useHouseholds();
   const checkIns = useCheckIns();
   const reports = useReports();
+  const notifications = useNotifications();
   const settings = useSettings();
 
   const [lang, setLang] = useState<Language>('en');
@@ -239,10 +242,13 @@ export default function App() {
             households={households}
             checkIns={checkIns}
             reports={reports}
+            notifications={notifications}
             settings={settings}
             lang={lang}
             onUpdateSettings={(partial) => updateSettings(partial)}
             onMarkSeenSafe={handleMarkSeenSafe}
+            onRunEvaluation={(simulatedNow) => runSilenceEvaluation(simulatedNow)}
+            onUpsertHousehold={upsertHousehold}
           />
         )}
       </main>

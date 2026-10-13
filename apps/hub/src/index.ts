@@ -6,10 +6,12 @@ import { setupSignaling } from './signaling';
 import {
   initPersistence,
   handleYjsSyncConnection,
+  evaluateAllHouseholds,
   hubDoc,
   householdsMap,
   tasksMap,
   accessLogArray,
+  notificationsArray,
   healthProfilesMap,
   settingsMap,
 } from './hubStore';
@@ -59,6 +61,19 @@ app.post('/api/settings', (req, res) => {
     settingsMap.set(key, val);
   }
   res.json({ success: true, settings: settingsMap.toJSON() });
+});
+
+// Trigger Silence Engine evaluation manually or with virtual simulated timestamp
+app.post('/api/silence/evaluate', (req, res) => {
+  const { simulatedTimestamp } = req.body || {};
+  const evalDate = simulatedTimestamp ? new Date(simulatedTimestamp) : new Date();
+  evaluateAllHouseholds(evalDate);
+  res.json({
+    evaluated: true,
+    timestamp: evalDate.toISOString(),
+    householdsCount: householdsMap.size,
+    notificationsCount: notificationsArray.length,
+  });
 });
 
 // Simulated SMS Ingestion stub (Prompt 9)
