@@ -4,7 +4,7 @@ Rule: finish each task's acceptance check before moving on. Commit after every t
 
 ## Phase 1: Foundation (hours 0-8)
 - [x] T1 Monorepo scaffold, types, README (Prompt 1). Check: `npm run dev` runs web and hub; `npm test` passes.
-- [ ] T2 Offline data layer, Yjs, IndexedDB, WebRTC, hub (Prompt 2). Check: two windows sync; offline edits converge.
+- [x] T2 Offline data layer, Yjs, IndexedDB, WebRTC, hub (Prompt 2). Check: two windows sync; offline edits converge.
 - [ ] T3 Resident and neighbour screens, check-in, SOS, settings (Prompt 3). Check: check-in on phone shows on coordinator instantly.
 - [ ] T4 Silence engine and ladder, hub job, fast-forward clock (Prompt 4). Check: tests pass; ladder walks in about a minute at 60x.
 - [ ] T5 DBSCAN and risk score with breakdown (Prompt 5). Check: lone miss LOW; clustered insulin-dependent near flood HIGH.
