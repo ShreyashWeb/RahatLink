@@ -17,7 +17,7 @@ import {
   scoreHousehold,
   rankVolunteers,
 } from '@rahatlink/core';
-import { getHealthProfile } from '../store';
+import { getHealthProfile, requestBreakGlassBriefing } from '../store';
 import { CoordinatorMap } from '../components/CoordinatorMap';
 import type { Language } from '../i18n';
 import {
@@ -42,6 +42,9 @@ import {
   Droplets,
   Sliders,
   Check,
+  Unlock,
+  AlertOctagon,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface CoordinatorScreenProps {
@@ -55,6 +58,7 @@ interface CoordinatorScreenProps {
   floodZones: FloodZone[];
   syncStatus: any;
   lang: Language;
+  accessLogs?: AccessLogEntry[];
   onUpdateSettings: (partial: Partial<Settings>) => void;
   onMarkSeenSafe: (householdId: string) => void;
   onRunEvaluation: (simulatedNow?: Date) => void;
@@ -74,6 +78,7 @@ export function CoordinatorScreen({
   floodZones,
   syncStatus: _syncStatus,
   lang: _lang,
+  accessLogs = [],
   onUpdateSettings,
   onMarkSeenSafe,
   onRunEvaluation,
@@ -85,6 +90,40 @@ export function CoordinatorScreen({
   const [expandedTaskIds, setExpandedTaskIds] = useState<Set<string>>(new Set(['task-cluster-1']));
   const [isFeedOpen, setIsFeedOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // Audit log modal state
+  const [isAuditLogOpen, setIsAuditLogOpen] = useState(false);
+  const [auditLogRoleFilter, setAuditLogRoleFilter] = useState<string>('ALL');
+
+  // Break-Glass state
+  const [breakGlassTask, setBreakGlassTask] = useState<any | null>(null);
+  const [breakGlassReason, setBreakGlassReason] = useState('');
+  const [breakGlassResult, setBreakGlassResult] = useState<any | null>(null);
+  const [isSubmittingBreakGlass, setIsSubmittingBreakGlass] = useState(false);
+  const [breakGlassError, setBreakGlassError] = useState('');
+
+  const handleTriggerBreakGlass = async () => {
+    if (!breakGlassTask) return;
+    if (!breakGlassReason.trim() || breakGlassReason.trim().length < 5) {
+      setBreakGlassError('Mandatory justification reason required (minimum 5 characters)');
+      return;
+    }
+
+    setIsSubmittingBreakGlass(true);
+    setBreakGlassError('');
+    try {
+      const result = await requestBreakGlassBriefing(
+        breakGlassTask.id,
+        'Coordinator',
+        breakGlassReason.trim(),
+      );
+      setBreakGlassResult(result);
+    } catch (err: any) {
+      setBreakGlassError(err?.message || 'Failed to trigger break-glass exemption.');
+    } finally {
+      setIsSubmittingBreakGlass(false);
+    }
+  };
 
   // Volunteer Match Modal State
   const [matchingTask, setMatchingTask] = useState<{
@@ -518,6 +557,16 @@ export function CoordinatorScreen({
           >
             <Sliders className="w-3.5 h-3.5 text-[#2F6FDE]" />
             <span>Weights</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsAuditLogOpen(true)}
+            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-[#0B1B3A] border border-[#F1D5BF] hover:bg-[#FFF6EE] transition-all flex items-center gap-1.5"
+            title="View system-wide privacy and access audit logs"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Audit Log ({accessLogs.length})</span>
           </button>
         </div>
       </div>
@@ -1012,6 +1061,23 @@ export function CoordinatorScreen({
                         <span>Seen Safe</span>
                       </button>
 
+                      {/* Break-Glass Emergency Exemption */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBreakGlassTask(task);
+                          setBreakGlassReason('');
+                          setBreakGlassResult(null);
+                          setBreakGlassError('');
+                        }}
+                        disabled={task.status === 'resolved' || task.status === 'cancelled'}
+                        className="px-2 py-1.5 rounded-xl text-xs font-bold bg-rose-50 border border-rose-300 hover:bg-rose-100 text-rose-800 transition-all flex items-center justify-center gap-1 disabled:opacity-40"
+                        title="Emergency life-safety break-glass exemption (DPDP Act)"
+                      >
+                        <Unlock className="w-3.5 h-3.5 text-rose-600" />
+                        <span>Break-Glass</span>
+                      </button>
+
                       {/* Cancel Button */}
                       <button
                         type="button"
@@ -1217,6 +1283,373 @@ export function CoordinatorScreen({
                 Confirm Override
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. System Access Audit Log Modal */}
+      {isAuditLogOpen && (
+        <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-[#F1D5BF] animate-scaleUp overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#0B1B3A] flex items-center gap-2">
+                    <span>Privacy & Access Audit Log</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 uppercase tracking-wider">
+                      DPDP Compliance
+                    </span>
+                  </h3>
+                  <p className="text-xs text-[#6B7280]">
+                    Immutable audit record of data access, medical unlocks, break-glass events, and erasure requests.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAuditLogOpen(false)}
+                className="text-gray-400 hover:text-gray-600 text-lg leading-none p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Filter Bar */}
+            <div className="px-6 py-3 bg-[#FFF6EE] border-b border-[#F1D5BF] flex items-center justify-between gap-3">
+              <div className="flex items-center gap-1.5">
+                {(['ALL', 'volunteer', 'coordinator', 'resident'] as const).map((filterRole) => (
+                  <button
+                    key={filterRole}
+                    type="button"
+                    onClick={() => setAuditLogRoleFilter(filterRole)}
+                    className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-colors ${
+                      auditLogRoleFilter === filterRole
+                        ? 'bg-[#0B1B3A] text-white shadow-sm'
+                        : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-100'
+                    }`}
+                  >
+                    {filterRole === 'ALL' ? 'All Roles' : filterRole.charAt(0).toUpperCase() + filterRole.slice(1)}
+                  </button>
+                ))}
+              </div>
+              <span className="text-xs font-semibold text-[#6B7280]">
+                {accessLogs.filter((l) => auditLogRoleFilter === 'ALL' || l.role === auditLogRoleFilter).length} Events
+              </span>
+            </div>
+
+            {/* Scrollable Log Entries */}
+            <div className="p-6 overflow-y-auto space-y-3 flex-1">
+              {(() => {
+                const filtered = accessLogs.filter(
+                  (l) => auditLogRoleFilter === 'ALL' || l.role === auditLogRoleFilter,
+                );
+                if (filtered.length === 0) {
+                  return (
+                    <div className="text-center py-12 text-gray-500 text-xs">
+                      No access log entries match this filter.
+                    </div>
+                  );
+                }
+                return filtered.map((entry) => {
+                  const household = households.find((h) => h.id === entry.householdId);
+                  const isBreakGlass = entry.action === 'break-glass';
+                  const isErasure = entry.action === 'delete-health-profile';
+                  const isExport = entry.action === 'export-data';
+
+                  return (
+                    <div
+                      key={entry.id}
+                      className={`p-3.5 rounded-2xl border text-xs space-y-2 transition-all ${
+                        isBreakGlass
+                          ? 'bg-rose-50/70 border-rose-200'
+                          : isErasure
+                          ? 'bg-purple-50/70 border-purple-200'
+                          : isExport
+                          ? 'bg-cyan-50/70 border-cyan-200'
+                          : 'bg-gray-50/80 border-gray-200'
+                      }`}
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                              isBreakGlass
+                                ? 'bg-rose-200 text-rose-900'
+                                : isErasure
+                                ? 'bg-purple-200 text-purple-900'
+                                : isExport
+                                ? 'bg-cyan-200 text-cyan-900'
+                                : 'bg-blue-100 text-blue-900'
+                            }`}
+                          >
+                            {entry.action}
+                          </span>
+                          <span className="font-bold text-[#0B1B3A]">
+                            {entry.actor} ({entry.role})
+                          </span>
+                        </div>
+                        <span className="text-[11px] font-semibold text-gray-500 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {new Date(entry.at).toLocaleString()}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between text-[11px] text-gray-600 gap-2">
+                        <div>
+                          <strong>Target Household:</strong>{' '}
+                          <span className="font-semibold text-[#0B1B3A]">
+                            {household?.name || entry.householdId}
+                          </span>{' '}
+                          ({entry.householdId})
+                        </div>
+                        <div>
+                          <strong>Field Scope:</strong>{' '}
+                          <span className="font-mono text-xs bg-white px-1.5 py-0.5 rounded border border-gray-200">
+                            {entry.field}
+                          </span>
+                        </div>
+                      </div>
+
+                      {entry.reason && (
+                        <div className="bg-white/80 border border-gray-200/80 rounded-xl p-2 text-[11px] text-[#4B5563] italic">
+                          "{entry.reason}"
+                        </div>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+              <span className="flex items-center gap-1.5">
+                <Shield className="w-3.5 h-3.5 text-emerald-600" />
+                Audit records persist offline in IndexedDB and synchronize across peers.
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsAuditLogOpen(false)}
+                className="px-4 py-1.5 rounded-xl font-bold bg-[#0B1B3A] text-white hover:bg-[#1a2d52] transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 7. Emergency Break-Glass Modal */}
+      {breakGlassTask && (
+        <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-red-200 space-y-4 animate-scaleUp">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center border border-rose-300">
+                  <AlertOctagon className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#0B1B3A]">
+                    Emergency Break-Glass Protocol
+                  </h3>
+                  <div className="text-[11px] text-rose-700 font-semibold flex items-center gap-1">
+                    <span>Life-Safety Statutory Exemption (DPDP Act, 2023)</span>
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setBreakGlassTask(null);
+                  setBreakGlassReason('');
+                  setBreakGlassResult(null);
+                  setBreakGlassError('');
+                }}
+                className="text-gray-400 hover:text-gray-600 text-lg leading-none"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Target Household Info */}
+            {(() => {
+              const primaryHousehold = households.find((h) => h.id === breakGlassTask.householdIds[0]);
+              const hasConsent = primaryHousehold?.consent?.health === true;
+
+              return (
+                <div className="space-y-4">
+                  <div className="bg-[#FFF6EE] border border-[#F1D5BF] rounded-2xl p-3.5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-extrabold text-sm text-[#0B1B3A]">
+                        {primaryHousehold?.name || 'Resident Name'}
+                      </span>
+                      <span
+                        className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase ${
+                          hasConsent
+                            ? 'bg-emerald-100 text-[#0F7A5F] border border-emerald-300'
+                            : 'bg-amber-100 text-amber-800 border border-amber-300'
+                        }`}
+                      >
+                        {hasConsent ? 'Consent on File' : 'No Consent on File'}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-600">
+                      {primaryHousehold?.address} • Floor {primaryHousehold?.floor ?? 0}
+                    </div>
+                    <div className="text-[11px] text-gray-500 italic">
+                      {hasConsent
+                        ? 'Resident granted health consent: break-glass releases full medical dossier.'
+                        : 'Resident withheld health consent: break-glass releases search & rescue location only.'}
+                    </div>
+                  </div>
+
+                  {!breakGlassResult ? (
+                    /* Input Form */
+                    <div className="space-y-3">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-[#0B1B3A] block">
+                          Mandatory Justification Reason: <span className="text-red-500">*</span>
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={breakGlassReason}
+                          onChange={(e) => {
+                            setBreakGlassReason(e.target.value);
+                            if (breakGlassError) setBreakGlassError('');
+                          }}
+                          placeholder="e.g. Resident reported unconscious by neighbours or floodwater rising rapidly; life rescue required."
+                          className="w-full text-xs p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                        />
+                        {breakGlassError && (
+                          <div className="text-[11px] text-red-600 font-semibold">
+                            {breakGlassError}
+                          </div>
+                        )}
+                        <p className="text-[10px] text-gray-500">
+                          This justification will be permanently written to the audit log for regulatory compliance.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+                        <button
+                          type="button"
+                          onClick={() => setBreakGlassTask(null)}
+                          className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleTriggerBreakGlass}
+                          disabled={isSubmittingBreakGlass || breakGlassReason.trim().length < 5}
+                          className="px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow transition-all flex items-center gap-1.5 disabled:opacity-50"
+                        >
+                          <Unlock className="w-3.5 h-3.5" />
+                          <span>
+                            {isSubmittingBreakGlass ? 'Logging Exemption...' : 'Release Emergency Briefing'}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Released Briefing Display */
+                    <div className="space-y-3 animate-fadeIn">
+                      <div
+                        className={`p-4 rounded-2xl border space-y-3 ${
+                          breakGlassResult.hasConsent
+                            ? 'bg-rose-50 border-rose-200'
+                            : 'bg-amber-50 border-amber-200'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span
+                            className={`text-xs font-black uppercase px-2.5 py-0.5 rounded-full ${
+                              breakGlassResult.hasConsent
+                                ? 'bg-rose-200 text-rose-900'
+                                : 'bg-amber-200 text-amber-900'
+                            }`}
+                          >
+                            {breakGlassResult.hasConsent
+                              ? 'Medical Dossier Released'
+                              : 'Location Only (No Medical Consent)'}
+                          </span>
+                          <span className="text-[11px] font-semibold text-gray-500">
+                            Logged: break-glass
+                          </span>
+                        </div>
+
+                        {breakGlassResult.hasConsent ? (
+                          <div className="space-y-2 text-xs">
+                            <div className="font-bold text-rose-900 flex items-center gap-1">
+                              <Heart className="w-3.5 h-3.5 text-rose-600" />
+                              <span>Medical Conditions:</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {breakGlassResult.healthProfile?.conditions?.map((cond: string) => (
+                                <span
+                                  key={cond}
+                                  className="bg-rose-100 text-rose-800 text-[10px] font-extrabold px-2 py-0.5 rounded uppercase"
+                                >
+                                  {cond}
+                                </span>
+                              ))}
+                            </div>
+                            {breakGlassResult.healthProfile?.allergies && (
+                              <div className="text-[11px] text-gray-700">
+                                <strong>Allergies:</strong>{' '}
+                                {Array.isArray(breakGlassResult.healthProfile.allergies)
+                                  ? breakGlassResult.healthProfile.allergies.join(', ')
+                                  : breakGlassResult.healthProfile.allergies}
+                              </div>
+                            )}
+                            {breakGlassResult.healthProfile?.medications && (
+                              <div className="text-[11px] text-gray-700">
+                                <strong>Medications:</strong> {breakGlassResult.healthProfile.medications}
+                              </div>
+                            )}
+                            {breakGlassResult.healthProfile?.notes && (
+                              <div className="text-[11px] text-gray-700">
+                                <strong>Notes:</strong> {breakGlassResult.healthProfile.notes}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-amber-900 space-y-1">
+                            <p className="font-bold">Medical records were withheld.</p>
+                            <p className="text-[11px] text-amber-800">
+                              Resident did not provide consent. Search and rescue team should proceed with standard emergency precautions.
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="pt-2 border-t border-gray-200 text-[10px] text-gray-500 italic">
+                          Self-reported by the resident. Not medical advice.
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-end pt-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBreakGlassTask(null);
+                            setBreakGlassReason('');
+                            setBreakGlassResult(null);
+                          }}
+                          className="px-4 py-2 rounded-xl text-xs font-bold bg-[#0B1B3A] text-white hover:bg-[#1a2d52] transition-colors"
+                        >
+                          Done & Return
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}

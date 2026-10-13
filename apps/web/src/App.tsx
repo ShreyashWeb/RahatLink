@@ -10,12 +10,17 @@ import {
   useTasks,
   useVolunteers,
   useFloodZones,
+  useAccessLog,
+  useHealthProfiles,
   addCheckIn,
   addReport,
   upsertHousehold,
   upsertVolunteer,
   updateTask,
   updateSettings,
+  saveHealthProfile,
+  deleteHealthProfile,
+  downloadResidentData,
   logAccess,
   runSilenceEvaluation,
   seedDemoDataIfEmpty,
@@ -47,6 +52,8 @@ export default function App() {
   const tasks = useTasks();
   const volunteers = useVolunteers();
   const floodZones = useFloodZones();
+  const accessLogs = useAccessLog();
+  const healthProfiles = useHealthProfiles();
 
   const [lang, setLang] = useState<Language>('en');
   const t = translations[lang];
@@ -231,9 +238,14 @@ export default function App() {
             checkIns={checkIns}
             settings={settings}
             lang={lang}
+            healthProfile={healthProfiles.get(activeHousehold.id)}
+            accessLogs={accessLogs.filter((entry) => entry.householdId === activeHousehold.id)}
             onCheckIn={handleCheckIn}
             onSendSOS={handleSendReport}
             onOpenSettingsModal={() => setIsOnboardingOpen(true)}
+            onSaveHealthProfile={saveHealthProfile}
+            onDeleteHealthProfile={deleteHealthProfile}
+            onDownloadData={downloadResidentData}
           />
         )}
 
@@ -260,6 +272,7 @@ export default function App() {
             floodZones={floodZones}
             syncStatus={syncStatus}
             lang={lang}
+            accessLogs={accessLogs}
             onUpdateSettings={(partial) => updateSettings(partial)}
             onMarkSeenSafe={handleMarkSeenSafe}
             onRunEvaluation={(simulatedNow) => runSilenceEvaluation(simulatedNow)}

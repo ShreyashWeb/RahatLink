@@ -88,7 +88,7 @@ app.post('/sms', (req, res) => {
   });
 });
 
-// Health Briefing Unlock Stub (Prompt 2 & 8 plumbing)
+// Health Briefing Unlock Endpoint (DPDP Act Compliance)
 app.post('/briefing/unlock', (req, res) => {
   const { taskId, volunteerId } = req.body || {};
   if (!taskId || !volunteerId) {
@@ -100,12 +100,30 @@ app.post('/briefing/unlock', (req, res) => {
     return res.status(404).json({ error: 'Task not found' });
   }
 
-  // Verification stub: task must be approved/assigned
-  if (task.status !== 'approved' && task.status !== 'accepted') {
+  // Check 1: Must be assigned to this volunteer
+  if (task.volunteerId !== volunteerId) {
     return res.status(403).json({
-      error: 'Access denied: Volunteer may only unlock briefing after coordinator approves and task is accepted.',
+      error: `Access denied: Task is assigned to ${task.volunteerId || 'no volunteer'}, not ${volunteerId}.`,
     });
   }
+
+  // Check 2: Task must be active ('approved' or 'accepted'), NOT 'resolved' or 'cancelled'
+  if (task.status === 'resolved' || task.status === 'cancelled') {
+    return res.status(403).json({
+      error: `Access expired: Task status is ${task.status}. Medical briefing access has been revoked.`,
+    });
+  }
+
+  if (task.status !== 'approved' && task.status !== 'accepted') {
+    return res.status(403).json({
+      error: `Access denied: Task status is ${task.status}. Requires coordinator approval before unlock.`,
+    });
+  }
+
+  // Check 3: Check resident health consent
+  const primaryHouseholdId = task.householdIds[0];
+  const household = householdsMap.get(primaryHouseholdId);
+  const hasConsent = household?.consent?.health === true;
 
   // Audit view in access log
   const logEntry: AccessLogEntry = {
@@ -113,60 +131,96 @@ app.post('/briefing/unlock', (req, res) => {
     at: new Date().toISOString(),
     actor: volunteerId,
     role: 'volunteer',
-    householdId: task.householdIds[0] || 'unknown',
-    field: 'healthProfile',
+    householdId: primaryHouseholdId || 'unknown',
+    field: hasConsent ? 'healthProfile' : 'locationOnly',
     action: 'view',
     reason: `Volunteer task briefing unlocked for task ${taskId}`,
   };
   accessLogArray.push([logEntry]);
 
   // Retrieve health profile from separate health store
-  const primaryHouseholdId = task.householdIds[0];
-  const profile = primaryHouseholdId ? healthProfilesMap.get(primaryHouseholdId) : null;
+  const profile = hasConsent && primaryHouseholdId ? healthProfilesMap.get(primaryHouseholdId) : null;
 
   return res.json({
     unlocked: true,
     taskId,
     volunteerId,
+    unlockedAt: logEntry.at,
     expiresInSeconds: 21600, // 6h max expiry
+    household: {
+      id: household?.id,
+      name: household?.name,
+      address: household?.address,
+      floor: household?.floor,
+      contactPhone: household?.contactPhone,
+    },
     healthProfile: profile || {
       householdId: primaryHouseholdId,
       conditions: [],
       allergies: [],
-      notes: 'No sensitive conditions on record',
+      notes: hasConsent
+        ? 'No sensitive conditions on record'
+        : 'Health consent not granted. Medical details suppressed.',
       updatedAt: new Date().toISOString(),
     },
+    disclaimer: 'Self-reported by the resident. Not medical advice.',
     simulated: true,
   });
 });
 
-// Break-glass emergency unlock stub (Prompt 8)
+// Break-glass emergency unlock endpoint (Hard Rule 3 & 5)
 app.post('/briefing/break-glass', (req, res) => {
   const { taskId, actor, reason } = req.body || {};
-  if (!taskId || !reason) {
+  if (!taskId || !reason || !String(reason).trim()) {
     return res.status(400).json({ error: 'taskId and mandatory logged reason required for break-glass' });
   }
 
   const task = tasksMap.get(taskId);
-  const householdId = task?.householdIds[0] || 'unknown';
+  if (!task) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+
+  const primaryHouseholdId = task.householdIds[0];
+  const household = householdsMap.get(primaryHouseholdId);
+  const hasConsent = household?.consent?.health === true;
 
   const logEntry: AccessLogEntry = {
     id: `log-bg-${Date.now()}`,
     at: new Date().toISOString(),
     actor: actor || 'coordinator',
     role: 'coordinator',
-    householdId,
-    field: 'healthProfile',
+    householdId: primaryHouseholdId || 'unknown',
+    field: hasConsent ? 'healthProfile' : 'locationOnly (no consent)',
     action: 'break-glass',
-    reason: String(reason),
+    reason: String(reason).trim(),
   };
   accessLogArray.push([logEntry]);
+
+  const profile = hasConsent && primaryHouseholdId ? healthProfilesMap.get(primaryHouseholdId) : null;
 
   return res.json({
     breakGlass: true,
     taskId,
-    loggedReason: reason,
+    hasConsent,
+    loggedReason: String(reason).trim(),
     timestamp: logEntry.at,
+    household: {
+      id: household?.id,
+      name: household?.name,
+      address: household?.address,
+      floor: household?.floor,
+      contactPhone: household?.contactPhone,
+    },
+    healthProfile: profile || {
+      householdId: primaryHouseholdId,
+      conditions: [],
+      allergies: [],
+      notes: hasConsent
+        ? 'No sensitive conditions on record'
+        : 'Resident withheld health consent. Location released for life rescue only.',
+    },
+    disclaimer: 'Self-reported by the resident. Not medical advice.',
+    simulated: true,
   });
 });
 

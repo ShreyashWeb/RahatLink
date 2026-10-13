@@ -276,6 +276,25 @@ export function useFloodZones(): FloodZone[] {
   return floodZones;
 }
 
+// Hook 10: useAccessLog
+export function useAccessLog(): AccessLogEntry[] {
+  const [log, setLog] = useState<AccessLogEntry[]>(() => {
+    return accessLogArray.toArray();
+  });
+
+  useEffect(() => {
+    const update = () => {
+      setLog(accessLogArray.toArray());
+    };
+    accessLogArray.observe(update);
+    return () => {
+      accessLogArray.unobserve(update);
+    };
+  }, []);
+
+  return log;
+}
+
 // ==========================================
 // Mutation Helpers
 // ==========================================
@@ -373,6 +392,125 @@ export async function requestHealthBriefing(taskId: string, volunteerId: string)
       notes: 'No sensitive conditions on file',
       updatedAt: new Date().toISOString(),
     },
+    simulated: true,
+  };
+}
+
+export function saveHealthProfile(profile: HealthProfile) {
+  healthProfilesMap.set(profile.householdId, profile);
+  const h = householdsMap.get(profile.householdId);
+  if (h) {
+    householdsMap.set(profile.householdId, {
+      ...h,
+      consent: { health: true, grantedAt: new Date().toISOString() },
+    });
+  }
+  logAccess({
+    id: `log-save-${Date.now()}`,
+    at: new Date().toISOString(),
+    actor: profile.householdId,
+    role: 'resident',
+    householdId: profile.householdId,
+    field: 'healthProfile',
+    action: 'view',
+    reason: 'Resident updated health profile and granted dispatch consent under DPDP Act',
+  });
+}
+
+export function deleteHealthProfile(householdId: string) {
+  healthProfilesMap.delete(householdId);
+  const h = householdsMap.get(householdId);
+  if (h) {
+    householdsMap.set(householdId, {
+      ...h,
+      consent: { health: false },
+    });
+  }
+  logAccess({
+    id: `log-del-${Date.now()}`,
+    at: new Date().toISOString(),
+    actor: householdId,
+    role: 'resident',
+    householdId,
+    field: 'healthProfile',
+    action: 'view',
+    reason: 'Resident exercised Right to Erasure / data deletion under DPDP Act',
+  });
+}
+
+export function downloadResidentData(householdId: string) {
+  const household = householdsMap.get(householdId);
+  const profile = healthProfilesMap.get(householdId);
+  const checkIns = checkInsArray.toArray().filter((ci) => ci.householdId === householdId);
+  const logs = accessLogArray.toArray().filter((l) => l.householdId === householdId);
+
+  const exportPayload = {
+    exportedAt: new Date().toISOString(),
+    compliance: 'Digital Personal Data Protection (DPDP) Act, 2023',
+    household,
+    healthProfile: profile || null,
+    checkInHistory: checkIns,
+    accessAuditLog: logs,
+    disclaimer: 'Self-reported by the resident. Not medical advice.',
+  };
+
+  const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `rahatlink-my-data-${householdId}-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export async function requestBreakGlassBriefing(taskId: string, actor: string, reason: string) {
+  const hubHost = typeof window !== 'undefined' ? window.location.hostname || 'localhost' : 'localhost';
+  try {
+    const res = await fetch(`http://${hubHost}:4444/briefing/break-glass`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ taskId, actor, reason }),
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (_err) {
+    // Offline fallback
+  }
+
+  // Local fallback
+  const task = tasksMap.get(taskId);
+  const primaryHouseholdId = task?.householdIds[0] || 'unknown';
+  const household = householdsMap.get(primaryHouseholdId);
+  const hasConsent = household?.consent?.health === true;
+
+  logAccess({
+    id: `log-bg-${Date.now()}`,
+    at: new Date().toISOString(),
+    actor: actor || 'coordinator',
+    role: 'coordinator',
+    householdId: primaryHouseholdId,
+    field: hasConsent ? 'healthProfile' : 'locationOnly (no consent)',
+    action: 'break-glass',
+    reason,
+  });
+
+  const profile = hasConsent ? healthProfilesMap.get(primaryHouseholdId) : null;
+  return {
+    breakGlass: true,
+    taskId,
+    hasConsent,
+    loggedReason: reason,
+    timestamp: new Date().toISOString(),
+    household,
+    healthProfile: profile || {
+      householdId: primaryHouseholdId,
+      conditions: [],
+      notes: hasConsent
+        ? 'No sensitive conditions on record'
+        : 'Resident withheld health consent. Location released for life rescue only.',
+    },
+    disclaimer: 'Self-reported by the resident. Not medical advice.',
     simulated: true,
   };
 }

@@ -538,6 +538,12 @@ export function VolunteerScreen({
                               ))}
                             </div>
 
+                            {unlockedData.healthProfile.allergies && unlockedData.healthProfile.allergies.length > 0 && (
+                              <div className="text-[11px] text-[#4B5563]">
+                                <strong>Allergies:</strong> {unlockedData.healthProfile.allergies.join(', ')}
+                              </div>
+                            )}
+
                             {unlockedData.healthProfile.medications && (
                               <div className="text-[11px] text-[#4B5563]">
                                 <strong>Medications:</strong> {unlockedData.healthProfile.medications}
@@ -549,6 +555,11 @@ export function VolunteerScreen({
                                 <strong>Care Notes:</strong> {unlockedData.healthProfile.notes}
                               </div>
                             )}
+
+                            <div className="mt-2 pt-2 border-t border-rose-200 text-[10px] text-rose-800 italic flex flex-wrap items-center justify-between gap-1">
+                              <span>Self-reported by the resident. Not medical advice.</span>
+                              <span className="font-semibold text-gray-500 not-italic">Revokes upon resolution (Max 6h)</span>
+                            </div>
                           </div>
                         )}
                       </div>

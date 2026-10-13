@@ -119,7 +119,7 @@ export interface Task {
 }
 
 export type AccessRole = 'coordinator' | 'volunteer' | 'resident' | 'neighbour' | string;
-export type AccessAction = 'view' | 'break-glass';
+export type AccessAction = 'view' | 'break-glass' | 'delete-health-profile' | 'export-data' | string;
 
 export interface AccessLogEntry {
   id: string;
