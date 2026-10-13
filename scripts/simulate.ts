@@ -16,8 +16,8 @@
  * Team CodeForge | SRIJAN 2K26
  */
 
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import {
   Household,
   HealthProfile,
@@ -439,7 +439,7 @@ function runSimulation(): { results: BenchmarkResults; logs: SimulationStepLog[]
       // Normal households keep checking in every 24h
       if (!isTrapped && !isFalseAlarm && virtualHour < 48) {
         // Safe residents check in around their 24h mark
-        if (virtualHour >= 24 && new Date(h.lastCheckInAt).getTime() <= startTime.getTime()) {
+        if (virtualHour >= 24 && new Date(h.lastCheckInAt || 0).getTime() <= startTime.getTime()) {
           return {
             ...h,
             lastCheckInAt: new Date(startTime.getTime() + 24 * 3600000).toISOString(),
@@ -479,13 +479,15 @@ function runSimulation(): { results: BenchmarkResults; logs: SimulationStepLog[]
     const clusterResult = clusterFlaggedHouseholds(simHouseholds, 150, 2);
     let topScore = 0;
     for (const h of simHouseholds.filter((x) => x.status === 'flagged')) {
+      const matchedCluster = clusterResult.clusters.find((c) => c.memberIds.includes(h.id));
+      const clusterSize = matchedCluster ? matchedCluster.size : 1;
       const scored = scoreHousehold(h, {
-        allHouseholds: simHouseholds,
-        clusters: clusterResult.clusters,
+        clusterSize,
         floodZones,
         reports: virtualHour >= 30 ? smsReports : [],
         settings,
-        healthProfiles: consentedHealthProfiles,
+        healthProfile: healthProfileMap.get(h.id) || null,
+        now: currentVirtualTime,
       });
       if (scored.score > topScore) topScore = scored.score;
     }
