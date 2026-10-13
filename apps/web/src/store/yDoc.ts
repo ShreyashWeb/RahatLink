@@ -69,24 +69,30 @@ try {
   console.warn('[RahatLink] Direct hub websocket provider unavailable:', err);
 }
 
-// Sync Status Listeners
-type SyncStateListener = (state: {
+// Cached sync state to ensure stable reference for useSyncExternalStore
+interface SyncState {
   status: 'offline' | 'syncing' | 'synced';
   peersCount: number;
   idbLoaded: boolean;
-}) => void;
+}
 
+let cachedSyncState: SyncState = {
+  status: 'offline',
+  peersCount: 0,
+  idbLoaded: false,
+};
+
+type SyncStateListener = (state: SyncState) => void;
 const syncListeners = new Set<SyncStateListener>();
 
 export function subscribeSyncState(listener: SyncStateListener) {
   syncListeners.add(listener);
-  listener(getSyncState());
   return () => {
     syncListeners.delete(listener);
   };
 }
 
-export function getSyncState() {
+export function getSyncState(): SyncState {
   // Count connected WebRTC peers
   const webrtcRoom = webrtcProvider.room;
   const webrtcPeers = webrtcRoom ? webrtcRoom.webrtcConns.size : 0;
@@ -101,16 +107,24 @@ export function getSyncState() {
     status = 'syncing';
   }
 
-  return {
-    status,
-    peersCount: totalPeers,
-    idbLoaded: isIdbLoaded,
-  };
+  if (
+    cachedSyncState.status !== status ||
+    cachedSyncState.peersCount !== totalPeers ||
+    cachedSyncState.idbLoaded !== isIdbLoaded
+  ) {
+    cachedSyncState = {
+      status,
+      peersCount: totalPeers,
+      idbLoaded: isIdbLoaded,
+    };
+  }
+
+  return cachedSyncState;
 }
 
 function notifySyncListeners() {
-  const state = getSyncState();
-  syncListeners.forEach((l) => l(state));
+  getSyncState();
+  syncListeners.forEach((l) => l(cachedSyncState));
 }
 
 webrtcProvider.on('status', () => notifySyncListeners());

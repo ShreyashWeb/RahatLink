@@ -37,7 +37,6 @@ export function useHouseholds(): Household[] {
     const update = () => {
       setHouseholds(Array.from(householdsMap.values()));
     };
-    update();
     householdsMap.observe(update);
     return () => {
       householdsMap.unobserve(update);
@@ -57,7 +56,6 @@ export function useCheckIns(): CheckIn[] {
     const update = () => {
       setCheckIns(checkInsArray.toArray());
     };
-    update();
     checkInsArray.observe(update);
     return () => {
       checkInsArray.unobserve(update);
@@ -77,7 +75,6 @@ export function useTasks(): Task[] {
     const update = () => {
       setTasks(Array.from(tasksMap.values()));
     };
-    update();
     tasksMap.observe(update);
     return () => {
       tasksMap.unobserve(update);
@@ -97,7 +94,6 @@ export function useVolunteers(): Volunteer[] {
     const update = () => {
       setVolunteers(Array.from(volunteersMap.values()));
     };
-    update();
     volunteersMap.observe(update);
     return () => {
       volunteersMap.unobserve(update);
@@ -117,7 +113,6 @@ export function useReports(): Report[] {
     const update = () => {
       setReports(reportsArray.toArray());
     };
-    update();
     reportsArray.observe(update);
     return () => {
       reportsArray.unobserve(update);
