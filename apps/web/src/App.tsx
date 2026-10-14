@@ -158,16 +158,16 @@ export default function App() {
         <span
           role="status"
           aria-label={`Synced with ${syncStatus.peersCount} peer${syncStatus.peersCount === 1 ? '' : 's'}`}
-          className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-[#0F7A5F] border border-emerald-300 shrink-0"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-100 text-[#0F7A5F] border border-emerald-300 shrink-0 whitespace-nowrap shadow-xs"
           title={`Synced with ${syncStatus.peersCount} peer${syncStatus.peersCount === 1 ? '' : 's'}`}
         >
+          <span className="w-1.5 h-1.5 rounded-full bg-[#0F7A5F] animate-pulse shrink-0"></span>
           <Wifi className="w-3.5 h-3.5 text-[#0F7A5F] shrink-0" />
-          <span className="hidden sm:inline">
-            Synced ({syncStatus.peersCount} peer{syncStatus.peersCount === 1 ? '' : 's'}
-            {formatLastSynced(syncStatus.lastSyncedAt)})
+          <span>
+            {syncStatus.peersCount} {syncStatus.peersCount === 1 ? 'peer' : 'peers'}
           </span>
-          <span className="sm:hidden font-extrabold text-[11px]">
-            {syncStatus.peersCount}p
+          <span className="hidden lg:inline font-normal text-emerald-800">
+            {formatLastSynced(syncStatus.lastSyncedAt)}
           </span>
         </span>
       );
@@ -177,12 +177,12 @@ export default function App() {
         <span
           role="status"
           aria-label="Syncing with peers"
-          className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-[#D97706] border border-amber-300 animate-pulse shrink-0"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-amber-100 text-[#D97706] border border-amber-300 animate-pulse shrink-0 whitespace-nowrap shadow-xs"
           title="Syncing mesh peers..."
         >
+          <span className="w-1.5 h-1.5 rounded-full bg-[#D97706] shrink-0"></span>
           <Wifi className="w-3.5 h-3.5 text-[#D97706] shrink-0" />
-          <span className="hidden sm:inline">Syncing peers...</span>
-          <span className="sm:hidden font-extrabold text-[11px]">Sync</span>
+          <span>Syncing</span>
         </span>
       );
     }
@@ -190,40 +190,39 @@ export default function App() {
       <span
         role="status"
         aria-label="Offline, using local IndexedDB"
-        className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-300 shrink-0"
+        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-gray-100 text-gray-700 border border-gray-300 shrink-0 whitespace-nowrap shadow-xs"
         title="Offline (Local DB)"
       >
         <WifiOff className="w-3.5 h-3.5 text-gray-500 shrink-0" />
-        <span className="hidden sm:inline">Offline (Local DB)</span>
-        <span className="sm:hidden font-extrabold text-[11px]">Local</span>
+        <span>Local DB</span>
       </span>
     );
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF6EE] text-[#1F2937] flex flex-col font-sans">
+    <div className="min-h-screen bg-[#FFF6EE] text-[#1F2937] flex flex-col font-sans overflow-x-hidden">
       {/* PWA Offline / Install Banner */}
       <PwaInstallBanner />
 
       {/* Top Simulated Data Ribbon */}
-      <div className="bg-[#0B1B3A] text-white text-xs py-1.5 px-4 text-center font-medium tracking-wide flex items-center justify-center gap-2">
-        <span className="bg-[#F26A1B] text-white px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">
+      <div className="bg-[#0B1B3A] text-white text-[11px] sm:text-xs py-1.5 px-3 text-center font-medium tracking-wide flex items-center justify-center gap-1.5 sm:gap-2">
+        <span className="bg-[#F26A1B] text-white px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider shrink-0">
           Simulated Data
         </span>
-        <span>{t.simulatedRibbon}</span>
+        <span className="truncate max-w-[260px] sm:max-w-none">{t.simulatedRibbon}</span>
       </div>
 
       {/* Human-in-the-loop Governance Banner */}
-      <div className="bg-[#FDE8D7] border-b border-[#F1D5BF] py-2 px-4 text-center text-xs sm:text-sm font-semibold text-[#C2500F] flex items-center justify-center gap-2">
-        <Shield className="w-4 h-4 text-[#F26A1B]" />
-        <span>{t.suggestsDecides}</span>
+      <div className="bg-[#FDE8D7] border-b border-[#F1D5BF] py-1.5 sm:py-2 px-3 sm:px-4 text-center text-[11px] sm:text-sm font-semibold text-[#C2500F] flex items-center justify-center gap-1.5 sm:gap-2">
+        <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#F26A1B] shrink-0" />
+        <span className="truncate max-w-[320px] sm:max-w-none">{t.suggestsDecides}</span>
       </div>
 
       {/* Main Header */}
-      <header className="bg-white border-b border-[#F1D5BF] py-2.5 sm:py-3.5 px-3 sm:px-6 shadow-sm sticky top-0 z-30">
+      <header className="bg-white border-b border-[#F1D5BF] py-2 sm:py-3 px-3 sm:px-6 shadow-sm sticky top-0 z-30">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-2">
           {/* Brand */}
-          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#0B1B3A] flex items-center justify-center text-white shadow shrink-0">
               <Radio className="w-4 h-4 sm:w-6 sm:h-6 text-[#F26A1B]" />
             </div>
@@ -231,60 +230,69 @@ export default function App() {
               <div className="text-base sm:text-xl font-black tracking-tight text-[#0B1B3A] leading-tight">
                 Rahat<span className="text-[#F26A1B]">Link</span>
               </div>
-              <div className="hidden xs:block text-[10px] sm:text-xs text-[#6B7280] leading-none mt-0.5">
+              <div className="hidden md:block text-[10px] sm:text-xs text-[#6B7280] leading-none mt-0.5">
                 Proactive Neighbourhood Safety
               </div>
             </div>
           </div>
 
-          {/* Right Controls: Role Badge + Language Toggle + Sync Status */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5">
-            {/* Roadmap / Architecture button */}
+          {/* Right Controls */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            {/* Roadmap button (hidden on mobile; available inside screens and desktop) */}
             <button
               type="button"
               onClick={() => setIsRoadmapOpen(true)}
-              className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-[#E8ECF4] border border-[#CCD6E8] text-[#0B1B3A] hover:bg-[#D4E0F5] transition-colors"
+              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#E8ECF4] border border-[#CCD6E8] text-[#0B1B3A] hover:bg-[#D4E0F5] transition-colors"
               title="Architecture & Future Roadmap (Bluetooth Mesh)"
               aria-label="View Architecture and Roadmap"
             >
               <Bluetooth className="w-3.5 h-3.5 text-[#2F6FDE]" />
-              <span className="hidden md:inline">Roadmap</span>
+              <span>Roadmap</span>
             </button>
 
-            {/* Role Button (Desktop & quick switch modal trigger) */}
+            {/* Desktop Role Button (On mobile, the bottom nav bar provides instantaneous role switching) */}
             <button
               type="button"
               onClick={() => setIsOnboardingOpen(true)}
-              className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-[#FFF6EE] border border-[#F1D5BF] text-[#0B1B3A] hover:bg-[#FDE8D7] transition-colors"
-              title="Change active user role"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#FFF6EE] border border-[#F1D5BF] text-[#0B1B3A] hover:bg-[#FDE8D7] transition-colors"
+              title="Change active user role / household"
               aria-label="Change active user role"
             >
               <UserCheck className="w-3.5 h-3.5 text-[#F26A1B] shrink-0" />
-              <span className="hidden sm:inline">{t.switchRole}:</span>
-              <span className="text-[#F26A1B] font-extrabold truncate max-w-[85px] sm:max-w-none">
-                {t.roles[role]}
-              </span>
+              <span>{t.switchRole}:</span>
+              <span className="text-[#F26A1B] font-extrabold">{t.roles[role]}</span>
+            </button>
+
+            {/* Mobile Household / Onboarding trigger icon */}
+            <button
+              type="button"
+              onClick={() => setIsOnboardingOpen(true)}
+              className="sm:hidden inline-flex items-center justify-center w-8 h-8 rounded-xl bg-[#FFF6EE] border border-[#F1D5BF] text-[#F26A1B] hover:bg-[#FDE8D7] transition-colors shrink-0"
+              title="Household & Role Settings"
+              aria-label="Household Settings"
+            >
+              <UserCheck className="w-4 h-4 text-[#F26A1B]" />
             </button>
 
             {/* Language Switcher */}
             <button
               type="button"
               onClick={() => setLang(lang === 'en' ? 'hi' : 'en')}
-              className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-xl text-xs font-bold bg-[#E8ECF4] text-[#0B1B3A] hover:bg-gray-200 transition-colors"
+              className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-xl text-xs font-bold bg-[#E8ECF4] text-[#0B1B3A] hover:bg-gray-200 transition-colors shrink-0"
               title="Toggle English / हिंदी"
               aria-label="Toggle language"
             >
-              <Globe className="w-3.5 h-3.5 text-[#2F6FDE]" />
-              <span className="text-[11px] sm:text-xs">{lang === 'en' ? 'हि' : 'EN'}</span>
+              <Globe className="w-3.5 h-3.5 text-[#2F6FDE] shrink-0" />
+              <span className="text-[11px] sm:text-xs font-extrabold">{lang === 'en' ? 'हिं' : 'EN'}</span>
             </button>
 
             {/* Storage indicator (Desktop only) */}
-            <span className="hidden lg:inline-flex items-center gap-1 text-xs text-[#6B7280] bg-[#E8ECF4] px-2.5 py-1 rounded-full">
+            <span className="hidden lg:inline-flex items-center gap-1 text-xs text-[#6B7280] bg-[#E8ECF4] px-2.5 py-1 rounded-full shrink-0">
               <Database className="w-3.5 h-3.5 text-[#2F6FDE]" />
               {syncStatus.idbLoaded ? 'IDB' : '...'}
             </span>
 
-            {/* Sync status chip (Compact on mobile) */}
+            {/* Sync status chip (Compact, clean, non-wrapping badge) */}
             {getStatusChip()}
           </div>
         </div>
