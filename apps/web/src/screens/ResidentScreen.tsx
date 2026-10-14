@@ -218,44 +218,49 @@ export function ResidentScreen({
   return (
     <div className="space-y-6 max-w-xl mx-auto">
       {/* Top Tabs: Check-In | Health Profile (DPDP) | Privacy Log */}
-      <div className="bg-white border border-[#F1D5BF] rounded-2xl p-1.5 flex items-center justify-between shadow-sm">
+      <div className="bg-white border border-[#F1D5BF] rounded-2xl p-1 sm:p-1.5 flex items-center justify-between shadow-sm gap-1">
         <button
           type="button"
           onClick={() => setActiveTab('checkin')}
-          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${
             activeTab === 'checkin'
               ? 'bg-[#0B1B3A] text-white shadow'
               : 'text-[#6B7280] hover:text-[#0B1B3A]'
           }`}
         >
-          <CheckCircle className="w-3.5 h-3.5" />
-          <span>Daily Check-In</span>
+          <CheckCircle className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">
+            <span className="hidden xs:inline">Daily </span>Check-In
+          </span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('health')}
-          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${
             activeTab === 'health'
               ? 'bg-[#0B1B3A] text-white shadow'
               : 'text-[#6B7280] hover:text-[#0B1B3A]'
           }`}
         >
-          <Heart className="w-3.5 h-3.5 text-rose-500" />
-          <span>Health Profile</span>
+          <Heart className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+          <span className="truncate">Health</span>
+          <span className="hidden sm:inline">Profile</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('privacyLog')}
-          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${
             activeTab === 'privacyLog'
               ? 'bg-[#0B1B3A] text-white shadow'
               : 'text-[#6B7280] hover:text-[#0B1B3A]'
           }`}
         >
-          <Shield className="w-3.5 h-3.5 text-[#0F7A5F]" />
-          <span>Access Log ({myAccessLogs.length})</span>
+          <Shield className="w-3.5 h-3.5 text-[#0F7A5F] shrink-0" />
+          <span className="truncate">
+            <span className="hidden sm:inline">Access </span>Log ({myAccessLogs.length})
+          </span>
         </button>
       </div>
 

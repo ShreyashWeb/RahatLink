@@ -310,29 +310,31 @@ export function VolunteerScreen({
           </div>
 
           {/* Volunteer Profile Selector & QR Sync */}
-          <div className="flex items-center gap-2 self-start sm:self-center">
+          <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
             <button
               type="button"
               onClick={() => setIsQrSyncOpen(true)}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#0B1B3A] text-white hover:bg-[#1a2d52] transition-colors flex items-center gap-1.5 shadow-sm"
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#0B1B3A] text-white hover:bg-[#1a2d52] transition-colors flex items-center gap-1.5 shadow-sm shrink-0"
               title="Air-gapped sync with coordinator via QR code"
             >
               <QrCode className="w-3.5 h-3.5 text-[#F26A1B]" />
               <span>QR Sync</span>
             </button>
 
-            <span className="text-xs text-[#6B7280] font-semibold">Profile:</span>
-            <select
-              value={activeVolunteerId}
-              onChange={(e) => setActiveVolunteerId(e.target.value)}
-              className="text-xs font-bold bg-[#FFF6EE] border border-[#F1D5BF] rounded-xl px-2.5 py-1.5 text-[#0B1B3A] focus:outline-none"
-            >
-              {volunteers.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.name} ({v.skills.join(', ')})
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-xs text-[#6B7280] font-semibold shrink-0">Profile:</span>
+              <select
+                value={activeVolunteerId}
+                onChange={(e) => setActiveVolunteerId(e.target.value)}
+                className="text-xs font-bold bg-[#FFF6EE] border border-[#F1D5BF] rounded-xl px-2.5 py-1.5 text-[#0B1B3A] focus:outline-none truncate max-w-[150px] sm:max-w-none"
+              >
+                {volunteers.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 

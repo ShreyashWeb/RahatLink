@@ -187,12 +187,12 @@ export function QrSyncModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-[#F1D5BF] space-y-4 animate-scaleUp overflow-hidden">
+    <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-white rounded-3xl max-w-lg w-full p-4 sm:p-6 shadow-2xl border border-[#F1D5BF] space-y-4 animate-scaleUp overflow-y-auto max-h-[92vh]">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-100 pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-[#FFF6EE] border border-[#F1D5BF] text-[#F26A1B] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-[#FFF6EE] border border-[#F1D5BF] text-[#F26A1B] flex items-center justify-center shrink-0">
               <QrCode className="w-5 h-5" />
             </div>
             <div>
@@ -203,7 +203,8 @@ export function QrSyncModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-lg leading-none p-1"
+            aria-label="Close QR modal"
+            className="text-gray-400 hover:text-gray-600 text-lg leading-none p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
           >
             ✕
           </button>

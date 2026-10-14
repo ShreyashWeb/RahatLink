@@ -45,6 +45,9 @@ import {
   Globe,
   UserCheck,
   Bluetooth,
+  Home,
+  Users,
+  HeartHandshake,
 } from 'lucide-react';
 
 export default function App() {
@@ -155,12 +158,16 @@ export default function App() {
         <span
           role="status"
           aria-label={`Synced with ${syncStatus.peersCount} peer${syncStatus.peersCount === 1 ? '' : 's'}`}
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-[#0F7A5F] border border-emerald-300"
+          className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-[#0F7A5F] border border-emerald-300 shrink-0"
+          title={`Synced with ${syncStatus.peersCount} peer${syncStatus.peersCount === 1 ? '' : 's'}`}
         >
-          <Wifi className="w-3.5 h-3.5 text-[#0F7A5F]" />
-          <span>
+          <Wifi className="w-3.5 h-3.5 text-[#0F7A5F] shrink-0" />
+          <span className="hidden sm:inline">
             Synced ({syncStatus.peersCount} peer{syncStatus.peersCount === 1 ? '' : 's'}
             {formatLastSynced(syncStatus.lastSyncedAt)})
+          </span>
+          <span className="sm:hidden font-extrabold text-[11px]">
+            {syncStatus.peersCount}p
           </span>
         </span>
       );
@@ -170,10 +177,12 @@ export default function App() {
         <span
           role="status"
           aria-label="Syncing with peers"
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-[#D97706] border border-amber-300 animate-pulse"
+          className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-[#D97706] border border-amber-300 animate-pulse shrink-0"
+          title="Syncing mesh peers..."
         >
-          <Wifi className="w-3.5 h-3.5 text-[#D97706]" />
-          <span>Syncing peers...</span>
+          <Wifi className="w-3.5 h-3.5 text-[#D97706] shrink-0" />
+          <span className="hidden sm:inline">Syncing peers...</span>
+          <span className="sm:hidden font-extrabold text-[11px]">Sync</span>
         </span>
       );
     }
@@ -181,10 +190,12 @@ export default function App() {
       <span
         role="status"
         aria-label="Offline, using local IndexedDB"
-        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-300"
+        className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-300 shrink-0"
+        title="Offline (Local DB)"
       >
-        <WifiOff className="w-3.5 h-3.5 text-gray-500" />
-        <span>Offline (Local DB)</span>
+        <WifiOff className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+        <span className="hidden sm:inline">Offline (Local DB)</span>
+        <span className="sm:hidden font-extrabold text-[11px]">Local</span>
       </span>
     );
   };
@@ -209,72 +220,78 @@ export default function App() {
       </div>
 
       {/* Main Header */}
-      <header className="bg-white border-b border-[#F1D5BF] py-3.5 px-4 sm:px-6 shadow-sm sticky top-0 z-20">
+      <header className="bg-white border-b border-[#F1D5BF] py-2.5 sm:py-3.5 px-3 sm:px-6 shadow-sm sticky top-0 z-30">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-2">
           {/* Brand */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#0B1B3A] flex items-center justify-center text-white shadow">
-              <Radio className="w-5 h-5 sm:w-6 sm:h-6 text-[#F26A1B]" />
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#0B1B3A] flex items-center justify-center text-white shadow shrink-0">
+              <Radio className="w-4 h-4 sm:w-6 sm:h-6 text-[#F26A1B]" />
             </div>
             <div>
-              <div className="text-lg sm:text-xl font-bold tracking-tight text-[#0B1B3A]">
+              <div className="text-base sm:text-xl font-black tracking-tight text-[#0B1B3A] leading-tight">
                 Rahat<span className="text-[#F26A1B]">Link</span>
               </div>
-              <div className="text-[10px] sm:text-xs text-[#6B7280]">
+              <div className="hidden xs:block text-[10px] sm:text-xs text-[#6B7280] leading-none mt-0.5">
                 Proactive Neighbourhood Safety
               </div>
             </div>
           </div>
 
           {/* Right Controls: Role Badge + Language Toggle + Sync Status */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-2.5">
             {/* Roadmap / Architecture button */}
             <button
               type="button"
               onClick={() => setIsRoadmapOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#E8ECF4] border border-[#CCD6E8] text-[#0B1B3A] hover:bg-[#D4E0F5] transition-colors"
+              className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-[#E8ECF4] border border-[#CCD6E8] text-[#0B1B3A] hover:bg-[#D4E0F5] transition-colors"
               title="Architecture & Future Roadmap (Bluetooth Mesh)"
+              aria-label="View Architecture and Roadmap"
             >
               <Bluetooth className="w-3.5 h-3.5 text-[#2F6FDE]" />
               <span className="hidden md:inline">Roadmap</span>
             </button>
 
-            {/* Role Button */}
+            {/* Role Button (Desktop & quick switch modal trigger) */}
             <button
               type="button"
               onClick={() => setIsOnboardingOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#FFF6EE] border border-[#F1D5BF] text-[#0B1B3A] hover:bg-[#FDE8D7] transition-colors"
+              className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-[#FFF6EE] border border-[#F1D5BF] text-[#0B1B3A] hover:bg-[#FDE8D7] transition-colors"
+              title="Change active user role"
+              aria-label="Change active user role"
             >
-              <UserCheck className="w-3.5 h-3.5 text-[#F26A1B]" />
+              <UserCheck className="w-3.5 h-3.5 text-[#F26A1B] shrink-0" />
               <span className="hidden sm:inline">{t.switchRole}:</span>
-              <span className="text-[#F26A1B]">{t.roles[role]}</span>
+              <span className="text-[#F26A1B] font-extrabold truncate max-w-[85px] sm:max-w-none">
+                {t.roles[role]}
+              </span>
             </button>
 
             {/* Language Switcher */}
             <button
               type="button"
               onClick={() => setLang(lang === 'en' ? 'hi' : 'en')}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-[#E8ECF4] text-[#0B1B3A] hover:bg-gray-200 transition-colors"
+              className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-xl text-xs font-bold bg-[#E8ECF4] text-[#0B1B3A] hover:bg-gray-200 transition-colors"
               title="Toggle English / हिंदी"
+              aria-label="Toggle language"
             >
               <Globe className="w-3.5 h-3.5 text-[#2F6FDE]" />
-              <span>{t.langToggle}</span>
+              <span className="text-[11px] sm:text-xs">{lang === 'en' ? 'हि' : 'EN'}</span>
             </button>
 
-            {/* Storage indicator */}
-            <span className="hidden md:inline-flex items-center gap-1 text-xs text-[#6B7280] bg-[#E8ECF4] px-2.5 py-1 rounded-full">
+            {/* Storage indicator (Desktop only) */}
+            <span className="hidden lg:inline-flex items-center gap-1 text-xs text-[#6B7280] bg-[#E8ECF4] px-2.5 py-1 rounded-full">
               <Database className="w-3.5 h-3.5 text-[#2F6FDE]" />
               {syncStatus.idbLoaded ? 'IDB' : '...'}
             </span>
 
-            {/* Sync status chip */}
+            {/* Sync status chip (Compact on mobile) */}
             {getStatusChip()}
           </div>
         </div>
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6">
+      <main className="flex-1 max-w-6xl w-full mx-auto p-3 sm:p-6 pb-24 sm:pb-6">
         {/* Render Active Screen based on Selected Role */}
         {role === 'resident' && activeHousehold && (
           <ResidentScreen
@@ -345,6 +362,68 @@ export default function App() {
         )}
       </main>
 
+      {/* Mobile Bottom Navigation Bar (Fixed for thumb ergonomics on mobile) */}
+      <nav
+        aria-label="Mobile Role Switcher"
+        className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#F1D5BF] px-2 py-1 flex items-center justify-around shadow-2xl safe-area-pb"
+      >
+        <button
+          type="button"
+          id="mobile-nav-resident"
+          onClick={() => handleSelectRole('resident')}
+          className={`flex-1 flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all active:scale-95 cursor-pointer ${
+            role === 'resident'
+              ? 'text-[#F26A1B] font-extrabold bg-[#FFF6EE]'
+              : 'text-[#6B7280] hover:text-[#0B1B3A]'
+          }`}
+        >
+          <Home className="w-5 h-5 mb-0.5" />
+          <span className="text-[10px] tracking-tight">{t.roles.resident}</span>
+        </button>
+
+        <button
+          type="button"
+          id="mobile-nav-neighbour"
+          onClick={() => handleSelectRole('neighbour')}
+          className={`flex-1 flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all active:scale-95 cursor-pointer ${
+            role === 'neighbour'
+              ? 'text-[#F26A1B] font-extrabold bg-[#FFF6EE]'
+              : 'text-[#6B7280] hover:text-[#0B1B3A]'
+          }`}
+        >
+          <Users className="w-5 h-5 mb-0.5" />
+          <span className="text-[10px] tracking-tight">{t.roles.neighbour}</span>
+        </button>
+
+        <button
+          type="button"
+          id="mobile-nav-coordinator"
+          onClick={() => handleSelectRole('coordinator')}
+          className={`flex-1 flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all active:scale-95 cursor-pointer ${
+            role === 'coordinator'
+              ? 'text-[#F26A1B] font-extrabold bg-[#FFF6EE]'
+              : 'text-[#6B7280] hover:text-[#0B1B3A]'
+          }`}
+        >
+          <Shield className="w-5 h-5 mb-0.5" />
+          <span className="text-[10px] tracking-tight">{t.roles.coordinator}</span>
+        </button>
+
+        <button
+          type="button"
+          id="mobile-nav-volunteer"
+          onClick={() => handleSelectRole('volunteer')}
+          className={`flex-1 flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all active:scale-95 cursor-pointer ${
+            role === 'volunteer'
+              ? 'text-[#F26A1B] font-extrabold bg-[#FFF6EE]'
+              : 'text-[#6B7280] hover:text-[#0B1B3A]'
+          }`}
+        >
+          <HeartHandshake className="w-5 h-5 mb-0.5" />
+          <span className="text-[10px] tracking-tight">{t.roles.volunteer}</span>
+        </button>
+      </nav>
+
       {/* Onboarding & Role Switcher Modal */}
       <OnboardingModal
         isOpen={isOnboardingOpen}
@@ -365,7 +444,7 @@ export default function App() {
       />
 
       {/* Footer */}
-      <footer className="bg-white border-t border-[#F1D5BF] py-4 px-6 text-center text-xs text-[#6B7280]">
+      <footer className="bg-white border-t border-[#F1D5BF] py-4 px-6 text-center text-xs text-[#6B7280] pb-24 sm:pb-4">
         RahatLink • {t.tagline}
       </footer>
     </div>

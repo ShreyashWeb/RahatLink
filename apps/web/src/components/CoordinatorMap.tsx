@@ -8,6 +8,7 @@ import {
   Circle,
   Tooltip,
   useMap,
+  ZoomControl,
 } from 'react-leaflet';
 import L from 'leaflet';
 import type { Household, FloodZone, Volunteer, Cluster } from '@rahatlink/core';
@@ -158,30 +159,36 @@ export function CoordinatorMap({
   const defaultCenter: [number, number] = [26.8475, 80.9465];
 
   return (
-    <div className="relative isolate z-0 h-full min-h-[540px] w-full rounded-3xl overflow-hidden border border-[#F1D5BF] shadow-sm bg-[#EBF0F7] [background-image:radial-gradient(#CBD5E1_1px,transparent_1px)] [background-size:16px_16px]">
+    <div className="relative isolate z-0 h-full min-h-[380px] sm:min-h-[480px] lg:min-h-[540px] w-full rounded-3xl overflow-hidden border border-[#F1D5BF] shadow-sm bg-[#EBF0F7] [background-image:radial-gradient(#CBD5E1_1px,transparent_1px)] [background-size:16px_16px]">
       {/* Top Map Action Bar */}
-      <div className="absolute top-3 left-3 right-3 z-[1000] flex items-center justify-between gap-2 pointer-events-none">
-        <div className="bg-white/95 backdrop-blur-sm border border-[#F1D5BF] px-3 py-1.5 rounded-2xl shadow-sm text-xs font-bold text-[#0B1B3A] flex items-center gap-2 pointer-events-auto">
+      <div className="absolute top-2.5 left-2.5 right-2.5 z-[1000] flex items-center justify-between gap-1.5 pointer-events-none">
+        <div className="bg-white/95 backdrop-blur-sm border border-[#F1D5BF] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-2xl shadow-sm text-[11px] sm:text-xs font-bold text-[#0B1B3A] flex items-center gap-1.5 sm:gap-2 pointer-events-auto shrink-0">
           <Layers className="w-3.5 h-3.5 text-[#F26A1B]" />
-          <span>Riverside Demo Sector</span>
+          <span>Riverside Sector</span>
         </div>
 
         <button
           type="button"
           onClick={handlePreCacheTiles}
           disabled={isCaching}
-          className="bg-white/95 backdrop-blur-sm border border-[#F1D5BF] hover:bg-white text-[#0B1B3A] px-3 py-1.5 rounded-2xl shadow-sm text-xs font-semibold flex items-center gap-1.5 transition-all pointer-events-auto"
+          className="bg-white/95 backdrop-blur-sm border border-[#F1D5BF] hover:bg-white text-[#0B1B3A] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-2xl shadow-sm text-[11px] sm:text-xs font-semibold flex items-center gap-1.5 transition-all pointer-events-auto truncate max-w-[190px] sm:max-w-none"
           title="Pre-cache OpenStreetMap tiles for offline field operations"
         >
           {cachedTilesCount > 0 ? (
             <>
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#0F7A5F]" />
-              <span className="text-[#0F7A5F]">{cachedTilesCount} Tiles Cached (Offline Ready)</span>
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#0F7A5F] shrink-0" />
+              <span className="text-[#0F7A5F] truncate">
+                <span className="hidden sm:inline">{cachedTilesCount} Tiles Cached (Offline Ready)</span>
+                <span className="sm:hidden">{cachedTilesCount} Cached</span>
+              </span>
             </>
           ) : (
             <>
-              <DownloadCloud className={`w-3.5 h-3.5 text-[#2F6FDE] ${isCaching ? 'animate-bounce' : ''}`} />
-              <span>{isCaching ? 'Downloading tiles...' : 'Pre-download Demo Tiles'}</span>
+              <DownloadCloud className={`w-3.5 h-3.5 text-[#2F6FDE] shrink-0 ${isCaching ? 'animate-bounce' : ''}`} />
+              <span className="truncate">
+                <span className="hidden sm:inline">Pre-download Demo Tiles</span>
+                <span className="sm:hidden">Cache Tiles</span>
+              </span>
             </>
           )}
         </button>
@@ -191,8 +198,10 @@ export function CoordinatorMap({
         center={defaultCenter}
         zoom={15}
         scrollWheelZoom={true}
-        style={{ height: '100%', width: '100%', minHeight: '540px' }}
+        zoomControl={false}
+        style={{ height: '100%', width: '100%', minHeight: '380px' }}
       >
+        <ZoomControl position="bottomright" />
         <MapViewController center={targetCenter} />
 
         <TileLayer

@@ -104,6 +104,7 @@ export function CoordinatorScreen({
   const [selectedHouseholdId, setSelectedHouseholdId] = useState<string | undefined>('h-103');
   const [expandedTaskIds, setExpandedTaskIds] = useState<Set<string>>(new Set(['task-cluster-1']));
   const [taskFilter, setTaskFilter] = useState<'all' | 'active' | 'resolved'>('all');
+  const [mobileTab, setMobileTab] = useState<'tasks' | 'map'>('tasks');
   const [isFeedOpen, setIsFeedOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -619,11 +620,11 @@ export function CoordinatorScreen({
         </div>
 
         {/* Action Controls in Banner */}
-        <div className="flex items-center gap-2 self-end sm:self-center">
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 scrollbar-none">
           <button
             type="button"
             onClick={() => setIsFeedOpen(!isFeedOpen)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border shrink-0 ${
               isFeedOpen
                 ? 'bg-[#0B1B3A] text-white border-[#0B1B3A]'
                 : 'bg-white text-[#0B1B3A] border-[#F1D5BF] hover:bg-[#FFF6EE]'
@@ -636,7 +637,7 @@ export function CoordinatorScreen({
           <button
             type="button"
             onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-[#0B1B3A] border border-[#F1D5BF] hover:bg-[#FFF6EE] transition-all flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-[#0B1B3A] border border-[#F1D5BF] hover:bg-[#FFF6EE] transition-all flex items-center gap-1.5 shrink-0"
           >
             <Sliders className="w-3.5 h-3.5 text-[#2F6FDE]" />
             <span>Weights</span>
@@ -645,7 +646,7 @@ export function CoordinatorScreen({
           <button
             type="button"
             onClick={() => setIsTriageOpen(true)}
-            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-[#0B1B3A] border border-[#F1D5BF] hover:bg-[#FFF6EE] transition-all flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-[#0B1B3A] border border-[#F1D5BF] hover:bg-[#FFF6EE] transition-all flex items-center gap-1.5 shrink-0"
             title="SMS distress reports triage and parsing"
           >
             <MessageSquare className="w-3.5 h-3.5 text-blue-600" />
@@ -655,7 +656,7 @@ export function CoordinatorScreen({
           <button
             type="button"
             onClick={() => setIsQrSyncOpen(true)}
-            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-[#0B1B3A] border border-[#F1D5BF] hover:bg-[#FFF6EE] transition-all flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-[#0B1B3A] border border-[#F1D5BF] hover:bg-[#FFF6EE] transition-all flex items-center gap-1.5 shrink-0"
             title="Air-gapped multi-part QR sync with volunteers"
           >
             <QrCode className="w-3.5 h-3.5 text-[#F26A1B]" />
@@ -665,17 +666,17 @@ export function CoordinatorScreen({
           <button
             type="button"
             onClick={() => setIsAuditLogOpen(true)}
-            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-[#0B1B3A] border border-[#F1D5BF] hover:bg-[#FFF6EE] transition-all flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-[#0B1B3A] border border-[#F1D5BF] hover:bg-[#FFF6EE] transition-all flex items-center gap-1.5 shrink-0"
             title="View system-wide privacy and access audit logs"
           >
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Audit Log ({accessLogs.length})</span>
+            <span>Audit ({accessLogs.length})</span>
           </button>
 
           <button
             type="button"
             onClick={() => setIsRoadmapOpen(true)}
-            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-[#0B1B3A] border border-[#F1D5BF] hover:bg-[#FFF6EE] transition-all flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-[#0B1B3A] border border-[#F1D5BF] hover:bg-[#FFF6EE] transition-all flex items-center gap-1.5 shrink-0"
             title="Technology Roadmap & Bluetooth Mesh Scope"
           >
             <Bluetooth className="w-3.5 h-3.5 text-purple-600" />
@@ -685,14 +686,14 @@ export function CoordinatorScreen({
       </div>
 
       {/* 2. Top Bar: Disaster Toggle, Fast-Forward, Metrics, Simulated Ribbon */}
-      <div className="bg-white border border-[#F1D5BF] rounded-2xl p-4 shadow-sm flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-white border border-[#F1D5BF] rounded-2xl p-3 sm:p-4 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4">
         {/* Left Side: Disaster Mode & Fast Forward */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
           {/* Disaster Mode Toggle */}
           <button
             type="button"
             onClick={() => onUpdateSettings({ disasterMode: !settings.disasterMode })}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border shadow-sm ${
+            className={`w-full sm:w-auto px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 border shadow-sm ${
               settings.disasterMode
                 ? 'bg-[#B91C1C] text-white border-[#7F1D1D] shadow-md ring-2 ring-red-300'
                 : 'bg-[#FFF6EE] text-[#0B1B3A] border-[#F1D5BF] hover:bg-[#FDE8D7]'
@@ -706,11 +707,11 @@ export function CoordinatorScreen({
           </button>
 
           {/* Dev Fast-Forward 60x Button */}
-          <div className="flex items-center gap-1.5 bg-[#F8FAFC] border border-gray-200 p-1 rounded-xl">
+          <div className="flex items-center gap-1 bg-[#F8FAFC] border border-gray-200 p-1 rounded-xl w-full sm:w-auto justify-between sm:justify-start">
             <button
               type="button"
               onClick={() => setIsFastForwardActive(!isFastForwardActive)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                 isFastForwardActive
                   ? 'bg-amber-600 text-white shadow-sm'
                   : 'bg-white text-[#0B1B3A] border border-gray-200 hover:bg-gray-100'
@@ -764,22 +765,22 @@ export function CoordinatorScreen({
           )}
         </div>
 
-        {/* Right Side: Counts of Flagged / Approved / Resolved / OK */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="bg-red-50 border border-red-200 px-3 py-1.5 rounded-xl text-center">
-            <span className="text-xs font-extrabold text-red-700">{flaggedCount} Flagged</span>
+        {/* Right Side: Counts of Flagged / Approved / Resolved / OK (Clean 4-col grid on mobile) */}
+        <div className="grid grid-cols-4 gap-1.5 sm:flex sm:gap-2 w-full sm:w-auto">
+          <div className="bg-red-50 border border-red-200 px-2 sm:px-3 py-1.5 rounded-xl text-center">
+            <span className="text-[11px] sm:text-xs font-extrabold text-red-700">{flaggedCount} Flagged</span>
           </div>
 
-          <div className="bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl text-center">
-            <span className="text-xs font-extrabold text-[#0F7A5F]">{approvedTasksCount} Approved</span>
+          <div className="bg-emerald-50 border border-emerald-200 px-2 sm:px-3 py-1.5 rounded-xl text-center">
+            <span className="text-[11px] sm:text-xs font-extrabold text-[#0F7A5F]">{approvedTasksCount} Appr.</span>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-xl text-center">
-            <span className="text-xs font-extrabold text-[#2F6FDE]">{seenSafeCount} Resolved</span>
+          <div className="bg-blue-50 border border-blue-200 px-2 sm:px-3 py-1.5 rounded-xl text-center">
+            <span className="text-[11px] sm:text-xs font-extrabold text-[#2F6FDE]">{seenSafeCount} Res.</span>
           </div>
 
-          <div className="bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-xl text-center">
-            <span className="text-xs font-bold text-gray-600">{okCount} OK</span>
+          <div className="bg-gray-50 border border-gray-200 px-2 sm:px-3 py-1.5 rounded-xl text-center">
+            <span className="text-[11px] sm:text-xs font-bold text-gray-600">{okCount} OK</span>
           </div>
         </div>
       </div>
@@ -855,14 +856,42 @@ export function CoordinatorScreen({
         </div>
       )}
 
-      {/* 3. Main Two-Column Layout (Desktop-First, Tablet Usable) */}
+      {/* Mobile Segmented Switcher (Visible on < lg screens) */}
+      <div className="lg:hidden flex items-center p-1 bg-white border border-[#F1D5BF] rounded-2xl shadow-sm gap-1">
+        <button
+          type="button"
+          onClick={() => setMobileTab('tasks')}
+          className={`flex-1 py-2 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all ${
+            mobileTab === 'tasks'
+              ? 'bg-[#0B1B3A] text-white shadow-xs'
+              : 'text-[#6B7280] hover:text-[#0B1B3A]'
+          }`}
+        >
+          <Activity className="w-3.5 h-3.5 text-[#F26A1B]" />
+          <span>Priority Tasks ({rankedTasks.length})</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab('map')}
+          className={`flex-1 py-2 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all ${
+            mobileTab === 'map'
+              ? 'bg-[#0B1B3A] text-white shadow-xs'
+              : 'text-[#6B7280] hover:text-[#0B1B3A]'
+          }`}
+        >
+          <MapPin className="w-3.5 h-3.5 text-[#2F6FDE]" />
+          <span>Map View</span>
+        </button>
+      </div>
+
+      {/* 3. Main Two-Column Layout (Desktop-First, Tablet Usable, Mobile Segmented) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* LEFT COLUMN: Map View (7 cols) */}
-        <div className="lg:col-span-7 flex flex-col space-y-3">
-          <div className="bg-white border border-[#F1D5BF] rounded-3xl p-3 shadow-sm min-h-[580px] flex flex-col">
+        <div className={`lg:col-span-7 flex flex-col space-y-3 ${mobileTab === 'map' ? 'flex' : 'hidden lg:flex'}`}>
+          <div className="bg-white border border-[#F1D5BF] rounded-3xl p-2.5 sm:p-3 shadow-sm min-h-[380px] sm:min-h-[480px] lg:min-h-[580px] flex flex-col">
             <Suspense
               fallback={
-                <div className="w-full h-[540px] rounded-2xl bg-[#0B1B3A]/5 border border-dashed border-[#F1D5BF] flex flex-col items-center justify-center p-8 text-center space-y-3 animate-pulse">
+                <div className="w-full h-[380px] sm:h-[480px] lg:h-[540px] rounded-2xl bg-[#0B1B3A]/5 border border-dashed border-[#F1D5BF] flex flex-col items-center justify-center p-6 text-center space-y-3 animate-pulse">
                   <div className="w-12 h-12 rounded-2xl bg-[#0B1B3A] text-white flex items-center justify-center shadow">
                     <MapPin className="w-6 h-6 text-[#F26A1B]" />
                   </div>
@@ -893,7 +922,7 @@ export function CoordinatorScreen({
           <div className="bg-white border border-[#F1D5BF] rounded-2xl p-3 shadow-sm flex flex-wrap items-center justify-between gap-2 text-xs">
             <div className="flex items-center gap-2">
               <Layers className="w-4 h-4 text-[#F26A1B]" />
-              <span className="font-bold text-[#0B1B3A]">DBSCAN Clusters Detected:</span>
+              <span className="font-bold text-[#0B1B3A]">DBSCAN Clusters:</span>
               <span className="font-extrabold bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-[11px]">
                 {clusteringResult.clusters.length}
               </span>
@@ -908,6 +937,7 @@ export function CoordinatorScreen({
                     const firstMember = c.memberIds[0];
                     setSelectedHouseholdId(firstMember);
                     setExpandedTaskIds((prev) => new Set([...prev, `task-cluster-${c.id || i + 1}`]));
+                    setMobileTab('map');
                   }}
                   className="px-2.5 py-1 rounded-xl bg-[#FFF6EE] border border-[#F1D5BF] hover:bg-[#FDE8D7] font-semibold text-[11px] text-[#0B1B3A] transition-colors"
                 >
@@ -919,7 +949,7 @@ export function CoordinatorScreen({
         </div>
 
         {/* RIGHT COLUMN: Ranked Dispatch Queue (5 cols) */}
-        <div className="lg:col-span-5 flex flex-col space-y-3">
+        <div className={`lg:col-span-5 flex flex-col space-y-3 ${mobileTab === 'tasks' ? 'flex' : 'hidden lg:flex'}`}>
           {/* Header */}
           <div className="bg-white border border-[#F1D5BF] rounded-2xl p-3.5 shadow-sm space-y-2.5">
             <div className="flex items-center justify-between">
@@ -1083,7 +1113,10 @@ export function CoordinatorScreen({
                       {task.households.map((h) => (
                         <div
                           key={h.id}
-                          onClick={() => setSelectedHouseholdId(h.id)}
+                          onClick={() => {
+                            setSelectedHouseholdId(h.id);
+                            setMobileTab('map');
+                          }}
                           className="cursor-pointer hover:bg-[#FFF6EE] p-1.5 rounded-xl transition-colors"
                         >
                           <div className="text-xs font-bold text-[#0B1B3A] flex items-center gap-1.5">

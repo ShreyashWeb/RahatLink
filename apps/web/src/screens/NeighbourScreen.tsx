@@ -130,23 +130,23 @@ export function NeighbourScreen({
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                 <div className="bg-[#FFF6EE] p-2.5 rounded-xl border border-[#F1D5BF] flex items-center gap-2">
                   {h.hasSmartphone ? (
                     <>
-                      <Smartphone className="w-4 h-4 text-[#2F6FDE]" />
+                      <Smartphone className="w-4 h-4 text-[#2F6FDE] shrink-0" />
                       <span>Has Smartphone</span>
                     </>
                   ) : (
                     <>
-                      <PhoneOff className="w-4 h-4 text-[#D97706]" />
+                      <PhoneOff className="w-4 h-4 text-[#D97706] shrink-0" />
                       <span className="font-semibold text-[#D97706]">No Smartphone (Proxy Needed)</span>
                     </>
                   )}
                 </div>
 
                 <div className="bg-[#FFF6EE] p-2.5 rounded-xl border border-[#F1D5BF] flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-[#6B7280]" />
+                  <Clock className="w-4 h-4 text-[#6B7280] shrink-0" />
                   <span>{t.neighbour.lastChecked} <strong>{lastTime}</strong></span>
                 </div>
               </div>

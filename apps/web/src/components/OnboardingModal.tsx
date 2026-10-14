@@ -107,8 +107,8 @@ export function OnboardingModal({
   ];
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-lg w-full border border-[#F1D5BF] shadow-2xl p-6 max-h-[90vh] overflow-y-auto space-y-6 animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div className="bg-white rounded-3xl max-w-lg w-full border border-[#F1D5BF] shadow-2xl p-4 sm:p-6 max-h-[92vh] overflow-y-auto space-y-5 sm:space-y-6 animate-in fade-in zoom-in-95 duration-200">
         <div>
           <h2 className="text-xl font-bold text-[#0B1B3A]">{t.onboarding.welcome}</h2>
           <p className="text-xs text-[#6B7280] mt-1">{t.onboarding.selectRole}</p>
