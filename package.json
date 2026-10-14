@@ -17,19 +17,21 @@
     "sim:fast": "tsx scripts/simulate.ts --mode=fast",
     "sim:measure": "tsx scripts/simulate.ts --mode=measure",
     "sim:score": "tsx scripts/scoreSim.ts",
-    "build": "npm run build --workspaces"
+    "build": "npm run build --workspaces",
+    "hub": "tsx apps/hub/src/index.ts",
+    "start": "tsx apps/hub/src/index.ts"
   },
   "devDependencies": {
     "@types/pako": "^2.0.4",
     "@types/qrcode": "^1.5.6",
     "concurrently": "^9.1.2",
     "playwright": "^1.64.0",
-    "tsx": "^4.23.15",
     "typescript": "^5.7.3"
   },
   "dependencies": {
     "jsqr": "^1.4.0",
     "pako": "^3.0.2",
-    "qrcode": "^1.5.4"
+    "qrcode": "^1.5.4",
+    "tsx": "^4.23.15"
   }
 }
