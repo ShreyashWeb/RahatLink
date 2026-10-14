@@ -250,6 +250,15 @@ export function CoordinatorScreen({
     return clusterFlaggedHouseholds(households, 150, 2);
   }, [households]);
 
+  // Active Emergency SOS Reports from residents
+  const activeSosReports = useMemo(() => {
+    return reports.filter(
+      (r) =>
+        (r.parsed?.type === 'sos' || r.text.includes('EMERGENCY SOS')) &&
+        !(r as any).resolved,
+    );
+  }, [reports]);
+
   // Generate and Rank Dispatch Tasks dynamically from clusters and isolated flagged households
   interface ComputedTaskView {
     id: string;
@@ -265,6 +274,8 @@ export function CoordinatorScreen({
     overrideReason?: string;
     elapsedSilenceHours: number;
     effectiveGraceHours: number;
+    hasSos?: boolean;
+    sosReport?: Report;
   }
 
   const rankedTasks = useMemo(() => {
@@ -282,6 +293,7 @@ export function CoordinatorScreen({
       let maxScore = -1;
       let representativeBreakdown: ScoreBreakdownItem[] = [];
       let representativeTier: RiskTier = 'LOW';
+      let clusterSosReport: Report | undefined;
 
       for (const h of clusterHouseholds) {
         const hp = getHealthProfile(h.id);
@@ -294,10 +306,33 @@ export function CoordinatorScreen({
           settings,
         });
 
+        const activeSos = reports.find(
+          (r) =>
+            (r.parsed?.type === 'sos' || r.text.includes('EMERGENCY SOS')) &&
+            r.parsed?.matchedHouseholdId === h.id &&
+            !(r as any).resolved,
+        );
+        if (activeSos && !clusterSosReport) {
+          clusterSosReport = activeSos;
+        }
+
         if (scoreRes.score > maxScore) {
           maxScore = scoreRes.score;
           representativeBreakdown = scoreRes.breakdown;
           representativeTier = scoreRes.tier;
+        }
+      }
+
+      const hasSos = Boolean(clusterSosReport);
+      if (hasSos) {
+        maxScore = 100;
+        representativeTier = 'HIGH';
+        if (!representativeBreakdown.some((b) => b.factor.includes('SOS'))) {
+          representativeBreakdown.unshift({
+            factor: 'Emergency SOS Broadcast',
+            points: 100,
+            description: 'Immediate life-safety distress alert triggered by cluster resident',
+          });
         }
       }
 
@@ -321,14 +356,16 @@ export function CoordinatorScreen({
         households: clusterHouseholds,
         isCluster: true,
         clusterName: `DBSCAN Cluster #${idx + 1} (${clusterHouseholds.length} Households)`,
-        riskTier: (persistedTask?.riskTier as RiskTier) || representativeTier,
-        score: maxScore,
+        riskTier: hasSos ? 'HIGH' : (persistedTask?.riskTier as RiskTier) || representativeTier,
+        score: hasSos ? 100 : maxScore,
         breakdown: representativeBreakdown,
         status: (persistedTask?.status as any) || 'suggested',
         volunteerId: persistedTask?.volunteerId,
         overrideReason: (persistedTask as any)?.overrideReason,
         elapsedSilenceHours: elapsedSilence,
         effectiveGraceHours: effectiveGrace,
+        hasSos,
+        sosReport: clusterSosReport,
       });
     });
 
@@ -348,6 +385,24 @@ export function CoordinatorScreen({
         settings,
       });
 
+      const householdSosReport = reports.find(
+        (r) =>
+          (r.parsed?.type === 'sos' || r.text.includes('EMERGENCY SOS')) &&
+          r.parsed?.matchedHouseholdId === h.id &&
+          !(r as any).resolved,
+      );
+
+      const hasSos = Boolean(householdSosReport);
+      const breakdown = [...scoreRes.breakdown];
+      if (hasSos && !breakdown.some((b) => b.factor.includes('SOS'))) {
+        breakdown.unshift({
+          factor: 'Emergency SOS Broadcast',
+          points: 100,
+          description: 'Immediate life-safety distress alert triggered by resident',
+        });
+      }
+
+      processedHouseholdIds.add(h.id);
       const taskId = `task-${h.id}`;
       const persistedTask = tasks.find((t) => t.id === taskId);
 
@@ -365,22 +420,88 @@ export function CoordinatorScreen({
         householdIds: [h.id],
         households: [h],
         isCluster: false,
-        riskTier: (persistedTask?.riskTier as RiskTier) || scoreRes.tier,
-        score: scoreRes.score,
-        breakdown: scoreRes.breakdown,
+        riskTier: hasSos ? 'HIGH' : (persistedTask?.riskTier as RiskTier) || scoreRes.tier,
+        score: hasSos ? 100 : scoreRes.score,
+        breakdown,
         status: (persistedTask?.status as any) || 'suggested',
         volunteerId: persistedTask?.volunteerId,
         overrideReason: (persistedTask as any)?.overrideReason,
         elapsedSilenceHours: elapsedSilence,
         effectiveGraceHours: effectiveGrace,
+        hasSos,
+        sosReport: householdSosReport,
       });
     }
 
-    // Sort descending by score; active tasks first
+    // 3. Process any Households with active SOS that might not be in clusters or solitaryFlagged yet
+    for (const sosRep of activeSosReports) {
+      const targetHId = sosRep.parsed?.matchedHouseholdId;
+      if (!targetHId || processedHouseholdIds.has(targetHId)) {
+        // If it was already added to list, ensure hasSos is true and score is 100
+        if (targetHId) {
+          const existing = list.find((t) => t.householdIds.includes(targetHId));
+          if (existing) {
+            existing.hasSos = true;
+            existing.riskTier = 'HIGH';
+            existing.score = 100;
+            existing.sosReport = sosRep;
+          }
+        }
+        continue;
+      }
+
+      const h = households.find((hh) => hh.id === targetHId);
+      if (!h) continue;
+
+      processedHouseholdIds.add(h.id);
+      const taskId = `task-${h.id}`;
+      const persistedTask = tasks.find((t) => t.id === taskId);
+      const hp = getHealthProfile(h.id);
+      const scoreRes = scoreHousehold(h, {
+        healthProfile: hp,
+        clusterSize: 1,
+        floodZones,
+        reports,
+        now: virtualNow,
+        settings,
+      });
+
+      list.push({
+        id: taskId,
+        householdIds: [h.id],
+        households: [h],
+        isCluster: false,
+        riskTier: 'HIGH',
+        score: 100,
+        breakdown: [
+          {
+            factor: 'Emergency SOS Broadcast',
+            points: 100,
+            description: 'Immediate life-safety distress alert triggered by resident',
+          },
+          ...scoreRes.breakdown,
+        ],
+        status: (persistedTask?.status as any) || 'suggested',
+        volunteerId: persistedTask?.volunteerId,
+        overrideReason: (persistedTask as any)?.overrideReason,
+        elapsedSilenceHours: 0,
+        effectiveGraceHours: h.graceHours || 24,
+        hasSos: true,
+        sosReport: sosRep,
+      });
+    }
+
+    // Sort descending by score; active tasks first, and active SOS tasks prioritized at the top
     return list.sort((a, b) => {
       const aActive = a.status !== 'resolved' && a.status !== 'cancelled' ? 1 : 0;
       const bActive = b.status !== 'resolved' && b.status !== 'cancelled' ? 1 : 0;
       if (aActive !== bActive) return bActive - aActive;
+
+      // Active SOS always tops the dispatch queue!
+      const aSos = a.hasSos && aActive ? 1 : 0;
+      const bSos = b.hasSos && bActive ? 1 : 0;
+      if (aSos !== bSos) return bSos - aSos;
+
       return b.score - a.score;
     });
   }, [
@@ -388,6 +509,7 @@ export function CoordinatorScreen({
     households,
     floodZones,
     reports,
+    activeSosReports,
     virtualNow,
     settings,
     tasks,
@@ -685,6 +807,91 @@ export function CoordinatorScreen({
         </div>
       </div>
 
+      {/* 🚨 CRITICAL LIFE-SAFETY SOS BROADCAST BANNER 🚨 */}
+      {activeSosReports.length > 0 && (
+        <div className="bg-gradient-to-r from-red-600 via-red-700 to-rose-700 text-white rounded-2xl p-4 shadow-xl border-2 border-red-400 animate-pulse space-y-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white text-red-600 flex items-center justify-center font-black text-xl shrink-0 shadow">
+                🚨
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm sm:text-base font-black tracking-wide uppercase">
+                    Critical Life-Safety SOS Alert ({activeSosReports.length} Active)
+                  </h3>
+                  <span className="bg-white/20 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                    Immediate Action Required
+                  </span>
+                </div>
+                <p className="text-xs text-red-100 mt-0.5">
+                  Resident triggered emergency distress beacon. Local network alerted. Direct volunteer dispatch priority.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              {activeSosReports[0]?.parsed?.matchedHouseholdId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const hId = activeSosReports[0].parsed?.matchedHouseholdId;
+                    if (hId) {
+                      setSelectedHouseholdId(hId);
+                      setMobileTab('map');
+                      const match = rankedTasks.find((t) => t.householdIds.includes(hId));
+                      if (match) {
+                        setExpandedTaskIds((prev) => new Set([...prev, match.id]));
+                      }
+                    }
+                  }}
+                  className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-white text-red-700 font-extrabold text-xs hover:bg-red-50 transition shadow flex items-center justify-center gap-1.5"
+                >
+                  <MapPin className="w-4 h-4 text-red-600" />
+                  <span>Locate SOS on Map</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-2 border-t border-red-500/40">
+            {activeSosReports.map((sos) => {
+              const matchedH = households.find((h) => h.id === sos.parsed?.matchedHouseholdId);
+              return (
+                <div
+                  key={sos.id}
+                  onClick={() => {
+                    if (sos.parsed?.matchedHouseholdId) {
+                      setSelectedHouseholdId(sos.parsed.matchedHouseholdId);
+                      setMobileTab('map');
+                      const match = rankedTasks.find((t) => t.householdIds.includes(sos.parsed?.matchedHouseholdId!));
+                      if (match) {
+                        setExpandedTaskIds((prev) => new Set([...prev, match.id]));
+                      }
+                    }
+                  }}
+                  className="bg-black/20 hover:bg-black/30 cursor-pointer p-2.5 rounded-xl border border-red-400/40 text-xs flex items-center justify-between transition-all"
+                >
+                  <div>
+                    <div className="font-bold flex items-center gap-1.5">
+                      <span>{matchedH?.name || (sos as any).fromHouseholdName || sos.from || 'Household SOS'}</span>
+                      <span className="text-[10px] bg-red-500/60 px-1.5 py-0.2 rounded font-mono">
+                        {sos.from}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-red-100 truncate max-w-[200px]">
+                      {sos.text}
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-red-200 font-mono shrink-0">
+                    {new Date(sos.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* 2. Top Bar: Disaster Toggle, Fast-Forward, Metrics, Simulated Ribbon */}
       <div className="bg-white border border-[#F1D5BF] rounded-2xl p-3 sm:p-4 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4">
         {/* Left Side: Disaster Mode & Fast Forward */}
@@ -906,6 +1113,7 @@ export function CoordinatorScreen({
                 volunteers={volunteers}
                 clusters={clusteringResult.clusters}
                 selectedHouseholdId={selectedHouseholdId}
+                reports={reports}
                 onSelectHousehold={(id) => {
                   setSelectedHouseholdId(id);
                   // Also auto-expand matching task if present
@@ -1067,12 +1275,18 @@ export function CoordinatorScreen({
                   >
                     {/* Top Row: Tier Badge + Score + Status */}
                     <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider border ${tierStyles.badge}`}
-                        >
-                          {task.riskTier} TIER
-                        </span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {task.hasSos ? (
+                          <span className="bg-red-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-md animate-pulse">
+                            🚨 LIFE-SAFETY SOS
+                          </span>
+                        ) : (
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider border ${tierStyles.badge}`}
+                          >
+                            {task.riskTier} TIER
+                          </span>
+                        )}
 
                         {task.isCluster && (
                           <span className="bg-[#FFF6EE] border border-[#F1D5BF] text-[#F26A1B] text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
@@ -1107,6 +1321,29 @@ export function CoordinatorScreen({
                         </span>
                       </div>
                     </div>
+
+                    {/* SOS Active Callout Banner */}
+                    {task.hasSos && (
+                      <div className="bg-red-50 border border-red-200 text-red-800 p-2.5 rounded-xl text-xs space-y-1.5 animate-pulse">
+                        <div className="flex items-center justify-between font-black">
+                          <span className="flex items-center gap-1.5 text-red-700">
+                            🚨 CRITICAL EMERGENCY SOS BEACON
+                          </span>
+                          <span className="bg-red-600 text-white text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-wider">
+                            Dispatch Priority 1
+                          </span>
+                        </div>
+                        {task.sosReport && (
+                          <div className="text-[11px] text-red-900 bg-white/80 p-2 rounded-lg border border-red-100 font-medium">
+                            &ldquo;{task.sosReport.text}&rdquo;
+                            <div className="text-[10px] text-red-600 mt-1 font-mono flex items-center justify-between">
+                              <span>From: {(task.sosReport as any).fromHouseholdName || task.sosReport.from}</span>
+                              <span>{new Date(task.sosReport.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {/* Household Details */}
                     <div className="space-y-1.5">

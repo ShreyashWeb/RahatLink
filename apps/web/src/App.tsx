@@ -14,6 +14,7 @@ import {
   useHealthProfiles,
   addCheckIn,
   addReport,
+  addNotification,
   upsertHousehold,
   upsertVolunteer,
   updateTask,
@@ -106,6 +107,52 @@ export default function App() {
 
   const handleSendReport = (rep: Report) => {
     addReport(rep);
+
+    // If an Emergency SOS distress call is sent
+    if (rep.parsed?.type === 'sos' || rep.text.includes('EMERGENCY SOS')) {
+      const targetId = rep.parsed?.matchedHouseholdId || activeHouseholdId;
+      const target = households.find((h) => h.id === targetId);
+      if (target) {
+        // 1. Immediately flag the household in CRDT
+        upsertHousehold({
+          ...target,
+          status: 'flagged',
+        });
+
+        // 2. Add an urgent notification for the coordinator
+        addNotification({
+          id: `notif-sos-${Date.now()}`,
+          householdId: target.id,
+          householdName: target.name,
+          type: 'flagged',
+          message: `🚨 LIFE-SAFETY SOS DISTRESS: ${target.name} (${target.address}) pressed emergency distress button!`,
+          at: new Date().toISOString(),
+        });
+
+        // 3. Register or escalate priority task for coordinator review
+        updateTask({
+          id: `task-${target.id}`,
+          householdIds: [target.id],
+          riskTier: 'HIGH',
+          score: 100,
+          breakdown: [
+            {
+              factor: 'Emergency SOS Distress Alert',
+              points: 50,
+              description: 'Resident explicitly pressed EMERGENCY SOS distress button',
+            },
+            {
+              factor: 'Life-Safety Escalation',
+              points: 50,
+              description: 'Active distress call broadcast to neighbourhood mesh',
+            },
+          ],
+          status: 'suggested',
+          createdAt: new Date().toISOString(),
+          notes: rep.text,
+        });
+      }
+    }
   };
 
   const handleNudgeEscalation = (householdId: string, note: string) => {

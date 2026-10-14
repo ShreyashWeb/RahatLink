@@ -226,6 +226,10 @@ export function useNotifications(): AppNotification[] {
   return notifications;
 }
 
+export function addNotification(notif: AppNotification) {
+  notificationsArray.push([notif]);
+}
+
 /**
  * Run silence engine evaluation across all households
  */
