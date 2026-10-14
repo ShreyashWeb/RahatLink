@@ -1,4 +1,6 @@
 import http from 'http';
+import path from 'path';
+import fs from 'fs';
 import express from 'express';
 import cors from 'cors';
 import { WebSocketServer } from 'ws';
@@ -45,7 +47,20 @@ const verifyDemoSecret = (req: express.Request, res: express.Response, next: exp
 // Initialize binary file persistence
 initPersistence();
 
-app.get('/', (_req, res) => {
+// Detect built web PWA directory
+const candidateDistPaths = [
+  path.resolve(process.cwd(), 'apps/web/dist'),
+  path.resolve(process.cwd(), '../web/dist'),
+  path.resolve(process.cwd(), 'dist/web'),
+];
+const webDistPath = candidateDistPaths.find((p) => fs.existsSync(p));
+
+if (webDistPath) {
+  app.use(express.static(webDistPath));
+}
+
+// Hub status info API
+app.get('/api/info', (_req, res) => {
   res.json({
     app: 'RahatLink Hub',
     status: 'online',
@@ -59,6 +74,23 @@ app.get('/', (_req, res) => {
     simulated: true,
   });
 });
+
+if (!webDistPath) {
+  app.get('/', (_req, res) => {
+    res.json({
+      app: 'RahatLink Hub',
+      status: 'online',
+      tagline: 'Other apps wait for an SOS. RahatLink notices who went silent.',
+      stats: {
+        households: householdsMap.size,
+        tasks: tasksMap.size,
+        accessLogs: accessLogArray.length,
+        mode: settingsMap.get('disasterMode') ? 'DISASTER' : 'PEACETIME',
+      },
+      simulated: true,
+    });
+  });
+}
 
 app.get('/health', (_req, res) => {
   res.json({
@@ -322,6 +354,21 @@ app.post('/briefing/break-glass', verifyDemoSecret, (req, res) => {
     simulated: true,
   });
 });
+
+// SPA Fallback for client-side routing
+if (webDistPath) {
+  app.get('*', (req, res, next) => {
+    if (
+      req.path.startsWith('/api') ||
+      req.path === '/sms' ||
+      req.path === '/health' ||
+      req.path.startsWith('/briefing')
+    ) {
+      return next();
+    }
+    res.sendFile(path.join(webDistPath, 'index.html'));
+  });
+}
 
 // Create HTTP server
 const server = http.createServer(app);
