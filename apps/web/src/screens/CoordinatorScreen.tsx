@@ -570,6 +570,7 @@ export function CoordinatorScreen({
       createdAt: new Date().toISOString(),
     };
     onUpdateTask(taskRecord);
+    localStorage.setItem('rahatlink_active_volunteer', volunteerId);
     onLogAccess({
       id: `log-${Date.now()}`,
       at: new Date().toISOString(),
@@ -892,6 +893,46 @@ export function CoordinatorScreen({
         </div>
       )}
 
+      {/* ✅ Recent Safe Check-In Notification Banner */}
+      {(() => {
+        const latestSafe = [...notifications].reverse().find(
+          (n) => n.type === 'seenSafe' || (n.message && n.message.includes('checked in "I\'m Safe"')),
+        );
+        if (!latestSafe) return null;
+
+        return (
+          <div className="bg-emerald-50 border border-emerald-300 text-emerald-950 rounded-2xl p-3 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 animate-fadeIn">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#0F7A5F] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-xs">
+                ✓
+              </div>
+              <div>
+                <div className="text-xs font-bold text-emerald-950 flex items-center gap-2">
+                  <span>Safe Check-In Received: {latestSafe.householdName}</span>
+                  <span className="text-[10px] bg-emerald-200 text-emerald-800 px-1.5 py-0.2 rounded font-semibold">
+                    {new Date(latestSafe.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+                <p className="text-[11px] text-emerald-700 mt-0.5">{latestSafe.message}</p>
+              </div>
+            </div>
+            {latestSafe.householdId && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedHouseholdId(latestSafe.householdId);
+                  setMobileTab('map');
+                }}
+                className="px-3 py-1.5 rounded-xl bg-white text-emerald-800 border border-emerald-300 font-bold text-xs hover:bg-emerald-100 transition shadow-xs shrink-0 flex items-center justify-center gap-1.5"
+              >
+                <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Locate on Map</span>
+              </button>
+            )}
+          </div>
+        );
+      })()}
+
       {/* 2. Top Bar: Disaster Toggle, Fast-Forward, Metrics, Simulated Ribbon */}
       <div className="bg-white border border-[#F1D5BF] rounded-2xl p-3 sm:p-4 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4">
         {/* Left Side: Disaster Mode & Fast Forward */}
@@ -1019,7 +1060,7 @@ export function CoordinatorScreen({
                   className="p-2.5 rounded-xl text-xs flex items-start gap-2.5 bg-[#FFF6EE] border border-[#F1D5BF]"
                 >
                   <span className="text-base leading-none">
-                    {notif.type === 'flagged' ? '🚨' : notif.type === 'pinged' ? '🔔' : '📱'}
+                    {notif.type === 'flagged' ? '🚨' : (notif.type as string) === 'seenSafe' || (notif.type as string) === 'ok' ? '✅' : notif.type === 'pinged' ? '🔔' : '📱'}
                   </span>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
@@ -1490,12 +1531,54 @@ export function CoordinatorScreen({
                         <button
                           type="button"
                           onClick={() => handleApprove(task)}
-                          className="flex-1 min-w-[90px] px-2.5 py-1.5 rounded-xl text-xs font-bold bg-[#0F7A5F] hover:bg-[#0c624c] text-white transition-all shadow-sm flex items-center justify-center gap-1"
-                          title="Approve dispatch and match available volunteer"
+                          className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#0F7A5F] hover:bg-[#0c624c] text-white transition-all shadow-sm flex items-center justify-center gap-1 shrink-0"
+                          title="Open volunteer matching modal with fit scores"
                         >
                           <Check className="w-3.5 h-3.5" />
                           <span>Approve</span>
                         </button>
+
+                        {/* Quick Volunteer Dispatch Dropdown */}
+                        <select
+                          value={task.volunteerId || ''}
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              const vId = e.target.value;
+                              const taskRecord: Task = {
+                                id: task.id,
+                                householdIds: task.householdIds,
+                                riskTier: task.riskTier,
+                                score: task.score,
+                                breakdown: task.breakdown,
+                                status: 'approved',
+                                volunteerId: vId,
+                                approvedBy: 'Coordinator',
+                                createdAt: new Date().toISOString(),
+                              };
+                              onUpdateTask(taskRecord);
+                              localStorage.setItem('rahatlink_active_volunteer', vId);
+                              onLogAccess({
+                                id: `log-${Date.now()}`,
+                                at: new Date().toISOString(),
+                                actor: 'Coordinator',
+                                role: 'coordinator',
+                                householdId: task.householdIds[0],
+                                field: 'dispatch-approval',
+                                action: 'view',
+                                reason: `Assigned dispatch to volunteer ${vId}`,
+                              });
+                            }
+                          }}
+                          className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-[#0B1B3A] text-white hover:bg-[#1a2d52] border border-[#0B1B3A] transition-all cursor-pointer shadow-sm truncate max-w-[170px]"
+                          title="Quickly assign a specific volunteer to this task"
+                        >
+                          <option value="">Dispatch Volunteer ▾</option>
+                          {volunteers.map((v) => (
+                            <option key={v.id} value={v.id}>
+                              {v.name} ({v.available ? 'Ready' : 'Assigned'})
+                            </option>
+                          ))}
+                        </select>
 
                         {/* Override Button */}
                         <button

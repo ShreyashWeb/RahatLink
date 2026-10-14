@@ -103,6 +103,58 @@ export default function App() {
   // Actions
   const handleCheckIn = (ci: CheckIn) => {
     addCheckIn(ci);
+
+    const target = households.find((h) => h.id === ci.householdId);
+    if (target) {
+      // 1. Immediately update household in CRDT: status becomes 'ok', record last check-in time and battery
+      upsertHousehold({
+        ...target,
+        status: 'ok',
+        lastCheckInAt: ci.at,
+        lastBattery: ci.batteryPct ?? target.lastBattery,
+      });
+
+      // 2. Clear / resolve any active SOS reports for this household
+      reports.forEach((rep) => {
+        if (
+          (rep.parsed?.matchedHouseholdId === target.id || rep.from === target.contactPhone) &&
+          (rep.parsed?.type === 'sos' || rep.text.includes('EMERGENCY SOS')) &&
+          !(rep as any).resolved
+        ) {
+          updateReport({
+            ...rep,
+            status: 'linked',
+            resolved: true,
+          } as any);
+        }
+      });
+
+      // 3. If there is an active dispatch task for this household, auto-resolve it
+      tasks.forEach((t) => {
+        if (
+          t.householdIds.includes(target.id) &&
+          t.status !== 'resolved' &&
+          t.status !== 'cancelled'
+        ) {
+          updateTask({
+            ...t,
+            status: 'resolved',
+            resolvedAt: new Date().toISOString(),
+            notes: `Auto-resolved: Resident checked in safe ("I'm Safe") at ${new Date(ci.at).toLocaleTimeString()}`,
+          });
+        }
+      });
+
+      // 4. Log prominent "Safe Check-in" notification for coordinator feed
+      addNotification({
+        id: `notif-ok-${Date.now()}`,
+        householdId: target.id,
+        householdName: target.name,
+        type: 'seenSafe',
+        message: `✅ SAFE CHECK-IN: ${target.name} (${target.address}) checked in "I'm Safe" (Battery: ${ci.batteryPct ?? 85}%). Flag cleared.`,
+        at: new Date().toISOString(),
+      });
+    }
   };
 
   const handleSendReport = (rep: Report) => {

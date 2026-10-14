@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type {
   Volunteer,
   Task,
@@ -54,12 +54,31 @@ export function VolunteerScreen({
   onMergeQrSnapshot,
   onSwitchRole,
 }: VolunteerScreenProps) {
-  // Active volunteer identity (defaults to v-101 Priya Verma)
+  // Active volunteer identity (reads persisted assigned volunteer if present)
   const [activeVolunteerId, setActiveVolunteerId] = useState<string>(() => {
-    return volunteers[0]?.id || 'v-101';
+    return localStorage.getItem('rahatlink_active_volunteer') || volunteers[0]?.id || 'v-101';
   });
 
+  const [taskFilterMode, setTaskFilterMode] = useState<'my' | 'all'>('my');
   const [isQrSyncOpen, setIsQrSyncOpen] = useState(false);
+
+  // If current active volunteer has no assigned tasks, auto-switch to a volunteer who has newly assigned tasks
+  useEffect(() => {
+    const hasMyTasks = tasks.some(
+      (t) => t.volunteerId === activeVolunteerId && (t.status === 'approved' || t.status === 'accepted'),
+    );
+    if (!hasMyTasks) {
+      const volWithTask = volunteers.find((v) =>
+        tasks.some(
+          (t) => t.volunteerId === v.id && (t.status === 'approved' || t.status === 'accepted'),
+        ),
+      );
+      if (volWithTask) {
+        setActiveVolunteerId(volWithTask.id);
+        localStorage.setItem('rahatlink_active_volunteer', volWithTask.id);
+      }
+    }
+  }, [tasks, volunteers, activeVolunteerId]);
 
   const currentVolunteer =
     volunteers.find((v) => v.id === activeVolunteerId) || volunteers[0];
@@ -88,6 +107,13 @@ export function VolunteerScreen({
         (t.status === 'approved' || t.status === 'accepted'),
     );
   }, [tasks, currentVolunteer?.id]);
+
+  // All approved or accepted tasks across the whole response mesh
+  const allApprovedTasks = useMemo(() => {
+    return tasks.filter((t) => t.status === 'approved' || t.status === 'accepted');
+  }, [tasks]);
+
+  const displayedTasks = taskFilterMode === 'all' ? allApprovedTasks : myAssignedTasks;
 
   const resolvedTasksCount = useMemo(() => {
     return tasks.filter(
@@ -325,14 +351,22 @@ export function VolunteerScreen({
               <span className="text-xs text-[#6B7280] font-semibold shrink-0">Profile:</span>
               <select
                 value={activeVolunteerId}
-                onChange={(e) => setActiveVolunteerId(e.target.value)}
+                onChange={(e) => {
+                  setActiveVolunteerId(e.target.value);
+                  localStorage.setItem('rahatlink_active_volunteer', e.target.value);
+                }}
                 className="text-xs font-bold bg-[#FFF6EE] border border-[#F1D5BF] rounded-xl px-2.5 py-1.5 text-[#0B1B3A] focus:outline-none truncate max-w-[150px] sm:max-w-none"
               >
-                {volunteers.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.name}
-                  </option>
-                ))}
+                {volunteers.map((v) => {
+                  const assignedCount = tasks.filter(
+                    (t) => t.volunteerId === v.id && (t.status === 'approved' || t.status === 'accepted'),
+                  ).length;
+                  return (
+                    <option key={v.id} value={v.id}>
+                      {v.name} {assignedCount > 0 ? `(${assignedCount} Assigned 🚨)` : ''}
+                    </option>
+                  );
+                })}
               </select>
             </div>
           </div>
@@ -407,19 +441,63 @@ export function VolunteerScreen({
 
       {/* 3. Task Inbox */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           <div className="flex items-center gap-2">
             <Radio className="w-4 h-4 text-[#F26A1B]" />
             <h3 className="text-sm font-bold text-[#0B1B3A]">
-              My Dispatch Inbox ({myAssignedTasks.length})
+              Dispatch Inbox ({displayedTasks.length})
             </h3>
+            <span className="text-xs text-[#6B7280]">
+              ({resolvedTasksCount} resolved)
+            </span>
           </div>
-          <span className="text-xs text-[#6B7280]">
-            {resolvedTasksCount} successfully resolved
-          </span>
+
+          <div className="flex items-center gap-1.5 text-xs bg-gray-100 p-1 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setTaskFilterMode('my')}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                taskFilterMode === 'my'
+                  ? 'bg-[#0B1B3A] text-white shadow-xs'
+                  : 'text-[#6B7280] hover:text-[#0B1B3A]'
+              }`}
+            >
+              My Dispatches ({myAssignedTasks.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setTaskFilterMode('all')}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                taskFilterMode === 'all'
+                  ? 'bg-[#0B1B3A] text-white shadow-xs'
+                  : 'text-[#6B7280] hover:text-[#0B1B3A]'
+              }`}
+            >
+              All Field Dispatches ({allApprovedTasks.length})
+            </button>
+          </div>
         </div>
 
-        {myAssignedTasks.length === 0 ? (
+        {/* Cross-volunteer alert banner */}
+        {allApprovedTasks.length > 0 && taskFilterMode === 'my' && myAssignedTasks.length === 0 && (
+          <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 animate-fadeIn">
+            <div className="flex items-center gap-2">
+              <span className="text-base">🦺</span>
+              <span>
+                <strong>{allApprovedTasks.length} active task(s)</strong> assigned to other volunteers in the field.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setTaskFilterMode('all')}
+              className="px-3 py-1.5 bg-amber-600 text-white font-bold rounded-xl hover:bg-amber-700 transition shadow-xs text-center"
+            >
+              View All Field Dispatches
+            </button>
+          </div>
+        )}
+
+        {displayedTasks.length === 0 ? (
           /* Empty Inbox State */
           <div className="bg-white border border-[#F1D5BF] rounded-3xl p-6 sm:p-8 text-center space-y-4 shadow-sm">
             <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto text-amber-600">
@@ -460,10 +538,12 @@ export function VolunteerScreen({
           </div>
         ) : (
           <div className="space-y-4">
-            {myAssignedTasks.map((task) => {
+            {displayedTasks.map((task) => {
               const primaryHousehold = households.find((h) => h.id === task.householdIds[0]);
               const isAccepted = task.status === 'accepted';
               const unlockedData = unlockedBriefings[task.id];
+              const isAssignedToOther = task.volunteerId && task.volunteerId !== currentVolunteer.id;
+              const assignedVolunteerObj = volunteers.find((v) => v.id === task.volunteerId);
 
               // Calculate distance to primary household
               const distMeters = primaryHousehold
@@ -502,8 +582,8 @@ export function VolunteerScreen({
                   }`}
                 >
                   {/* Task Header: Risk Tier & Urgency */}
-                  <div className="flex items-center justify-between gap-2 border-b border-gray-100 pb-3">
-                    <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span
                         className={`text-xs font-black uppercase px-2.5 py-0.5 rounded-full border ${
                           task.riskTier === 'HIGH'
@@ -516,6 +596,23 @@ export function VolunteerScreen({
                       <span className="text-[11px] font-bold text-gray-500">
                         Task #{task.id}
                       </span>
+                      {isAssignedToOther && (
+                        <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 text-blue-900 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                          <span>🦺 Assigned: {assignedVolunteerObj?.name || task.volunteerId}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (task.volunteerId) {
+                                setActiveVolunteerId(task.volunteerId);
+                                localStorage.setItem('rahatlink_active_volunteer', task.volunteerId);
+                              }
+                            }}
+                            className="text-blue-700 underline hover:text-blue-950 font-black"
+                          >
+                            Switch to Responder
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-1.5">
