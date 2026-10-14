@@ -1225,10 +1225,10 @@ export function CoordinatorScreen({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* LEFT COLUMN: Map View (7 cols) */}
         <div className={`lg:col-span-7 flex flex-col space-y-3 ${mobileTab === 'map' ? 'flex' : 'hidden lg:flex'}`}>
-          <div className="bg-white border border-[#F1D5BF] rounded-3xl p-2.5 sm:p-3 shadow-sm min-h-[380px] sm:min-h-[480px] lg:min-h-[580px] flex flex-col">
+          <div className="bg-white border border-[#F1D5BF] rounded-3xl p-2 sm:p-2.5 shadow-sm flex flex-col">
             <Suspense
               fallback={
-                <div className="w-full h-[380px] sm:h-[480px] lg:h-[540px] rounded-2xl bg-[#0B1B3A]/5 border border-dashed border-[#F1D5BF] flex flex-col items-center justify-center p-6 text-center space-y-3 animate-pulse">
+                <div className="w-full h-[480px] sm:h-[540px] lg:h-[600px] rounded-2xl bg-[#0B1B3A]/5 border border-dashed border-[#F1D5BF] flex flex-col items-center justify-center p-6 text-center space-y-3 animate-pulse">
                   <div className="w-12 h-12 rounded-2xl bg-[#0B1B3A] text-white flex items-center justify-center shadow">
                     <MapPin className="w-6 h-6 text-[#F26A1B]" />
                   </div>

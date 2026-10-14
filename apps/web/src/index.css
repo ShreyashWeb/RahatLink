@@ -72,3 +72,12 @@ h1, h2, h3, h4, h5, h6 {
   margin: 8px 12px !important;
   line-height: 1.4 !important;
 }
+
+/* Ensure Leaflet container fills 100% height and width cleanly */
+.leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 1.5rem !important;
+  background-color: #EBF0F7 !important;
+}
+

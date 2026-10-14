@@ -26,11 +26,34 @@ interface CoordinatorMapProps {
 
 function MapViewController({ center }: { center?: [number, number] }) {
   const map = useMap();
+
+  useEffect(() => {
+    // Invalidate map size so Leaflet fills 100% of the canvas height
+    map.invalidateSize();
+    const t1 = setTimeout(() => map.invalidateSize(), 100);
+    const t2 = setTimeout(() => map.invalidateSize(), 300);
+    const t3 = setTimeout(() => map.invalidateSize(), 800);
+
+    const handleResize = () => {
+      map.invalidateSize();
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [map]);
+
   useEffect(() => {
     if (center) {
       map.panTo(center, { animate: true });
+      map.invalidateSize();
     }
   }, [center, map]);
+
   return null;
 }
 
@@ -176,7 +199,7 @@ export function CoordinatorMap({
   const defaultCenter: [number, number] = [26.8475, 80.9465];
 
   return (
-    <div className="relative isolate z-0 h-full min-h-[380px] sm:min-h-[480px] lg:min-h-[540px] w-full rounded-3xl overflow-hidden border border-[#F1D5BF] shadow-sm bg-[#EBF0F7] [background-image:radial-gradient(#CBD5E1_1px,transparent_1px)] [background-size:16px_16px]">
+    <div className="relative isolate z-0 h-[480px] sm:h-[540px] lg:h-[600px] w-full rounded-3xl overflow-hidden border border-[#F1D5BF] shadow-sm bg-[#EBF0F7]">
       {/* Top Map Action Bar */}
       <div className="absolute top-2.5 left-2.5 right-2.5 z-[1000] flex items-center justify-between gap-1.5 pointer-events-none">
         <div className="bg-white/95 backdrop-blur-sm border border-[#F1D5BF] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-2xl shadow-sm text-[11px] sm:text-xs font-bold text-[#0B1B3A] flex items-center gap-1.5 sm:gap-2 pointer-events-auto shrink-0">
@@ -216,7 +239,8 @@ export function CoordinatorMap({
         zoom={15}
         scrollWheelZoom={true}
         zoomControl={false}
-        style={{ height: '100%', width: '100%', minHeight: '380px' }}
+        style={{ height: '100%', width: '100%' }}
+        className="w-full h-full z-0"
       >
         <ZoomControl position="bottomright" />
         <MapViewController center={targetCenter} />
