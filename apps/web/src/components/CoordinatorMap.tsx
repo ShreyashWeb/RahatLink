@@ -35,13 +35,21 @@ function MapViewController({ center }: { center?: [number, number] }) {
 }
 
 // Offline-safe SVG marker generator by status
-function createStatusIcon(status: string, isSelected: boolean = false, hasSos: boolean = false) {
+function createStatusIcon(
+  status: string,
+  isSelected: boolean = false,
+  hasSos: boolean = false,
+  isRecentSafe: boolean = false,
+) {
   let color = '#0F7A5F'; // ok - green
   let symbol = '✓';
 
   if (hasSos) {
     color = '#DC2626'; // intense emergency red
     symbol = '🚨';
+  } else if (isRecentSafe) {
+    color = '#059669'; // luminous emerald for recent safe check-in
+    symbol = '✓';
   } else if (status === 'due' || status === 'grace') {
     color = '#D97706'; // amber
     symbol = '⏱';
@@ -59,6 +67,8 @@ function createStatusIcon(status: string, isSelected: boolean = false, hasSos: b
   const pulseRing =
     hasSos
       ? `<span class="absolute -inset-2.5 rounded-full bg-red-600 opacity-80 animate-ping"></span><span class="absolute -inset-1 rounded-full bg-red-400 opacity-60 animate-pulse"></span>`
+      : isRecentSafe
+      ? `<span class="absolute -inset-2 rounded-full bg-emerald-500 opacity-80 animate-ping"></span><span class="absolute -inset-1 rounded-full bg-emerald-300 opacity-70 animate-pulse"></span>`
       : status === 'flagged'
       ? `<span class="absolute -inset-1.5 rounded-full bg-red-500 opacity-60 animate-ping"></span>`
       : '';
@@ -291,7 +301,10 @@ export function CoordinatorMap({
         {/* 4. Households as Status-Colored Markers */}
         {households.map((h) => {
           const isSelected = selectedHouseholdId === h.id;
+          // Only show SOS if report is not resolved AND household is not already marked safe
           const hasSos = Boolean(
+            h.status !== 'ok' &&
+            h.status !== 'seenSafe' &&
             reports?.some(
               (r) =>
                 (r.parsed?.type === 'sos' || r.text.includes('EMERGENCY SOS')) &&
@@ -299,11 +312,20 @@ export function CoordinatorMap({
                 !(r as any).resolved
             )
           );
+
+          // Highlight households that recently checked in safe (within last 30 minutes)
+          const isRecentSafe = Boolean(
+            !hasSos &&
+            (h.status === 'ok' || h.status === 'seenSafe') &&
+            h.lastCheckInAt &&
+            (Date.now() - new Date(h.lastCheckInAt).getTime()) < 30 * 60 * 1000
+          );
+
           return (
             <Marker
               key={h.id}
               position={[h.lat, h.lng]}
-              icon={createStatusIcon(h.status, isSelected, hasSos)}
+              icon={createStatusIcon(h.status, isSelected, hasSos, isRecentSafe)}
               eventHandlers={{
                 click: () => onSelectHousehold && onSelectHousehold(h.id),
               }}
@@ -313,26 +335,38 @@ export function CoordinatorMap({
                   🚨 SOS: {h.name}
                 </Tooltip>
               )}
+              {isRecentSafe && (
+                <Tooltip permanent direction="top" className="safe-tooltip font-bold text-xs bg-emerald-600 text-white rounded px-2 py-0.5 shadow-lg border border-white animate-pulse">
+                  ✅ I'M OKAY: {h.name}
+                </Tooltip>
+              )}
               <Popup>
                 <div className="text-xs space-y-1 p-1 min-w-[160px]">
                   <div className="font-bold text-[#0B1B3A] flex items-center justify-between">
                     <span>{h.name}</span>
                     {hasSos && <span className="bg-red-600 text-white text-[9px] px-1 py-0.5 rounded font-black">🚨 SOS ACTIVE</span>}
+                    {isRecentSafe && <span className="bg-emerald-600 text-white text-[9px] px-1 py-0.5 rounded font-black">✅ CHECKED IN SAFE</span>}
                   </div>
                   <div className="text-[11px] text-[#6B7280]">{h.address}</div>
                   <div className="flex items-center justify-between pt-1 border-t border-gray-100">
                     <span className="font-semibold uppercase text-[10px]">Status:</span>
                     <span className={`font-bold uppercase text-[10px] px-1.5 py-0.5 rounded ${
                       hasSos ? 'bg-red-600 text-white animate-pulse' :
+                      isRecentSafe ? 'bg-emerald-600 text-white font-black' :
                       h.status === 'ok' ? 'bg-emerald-100 text-emerald-800' :
                       h.status === 'flagged' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
                     }`}>
-                      {hasSos ? 'EMERGENCY SOS' : h.status}
+                      {hasSos ? 'EMERGENCY SOS' : isRecentSafe ? 'SAFE ("I AM OKAY")' : h.status}
                     </span>
                   </div>
                   <div className="text-[10px] text-[#6B7280]">
                     Grace: {h.graceHours}h • Battery: {h.lastBattery ?? 80}%
                   </div>
+                  {h.lastCheckInAt && (
+                    <div className="text-[9px] text-[#059669] font-medium pt-0.5">
+                      Last Check-in: {new Date(h.lastCheckInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  )}
                 </div>
               </Popup>
             </Marker>
@@ -347,6 +381,10 @@ export function CoordinatorMap({
           <div className="flex items-center gap-1.5 col-span-2 bg-red-50 px-1.5 py-1 rounded border border-red-200">
             <span className="w-2.5 h-2.5 rounded-full bg-[#DC2626] animate-ping" />
             <span className="font-extrabold text-red-700">🚨 Life-Safety SOS Alert</span>
+          </div>
+          <div className="flex items-center gap-1.5 col-span-2 bg-emerald-50 px-1.5 py-1 rounded border border-emerald-200">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#059669] animate-ping" />
+            <span className="font-extrabold text-[#059669]">✅ Recent "I'm Safe"</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-[#0F7A5F]" />
