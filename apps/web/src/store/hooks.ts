@@ -26,6 +26,7 @@ import {
   healthProfilesMap,
   subscribeSyncState,
   getSyncState,
+  getHubApiUrl,
 } from './yDoc';
 
 // Shared Demo Secret for protected hub endpoints
@@ -386,9 +387,8 @@ export function updateReport(report: Report) {
 }
 
 export async function sendSmsGatewayReport(from: string, text: string) {
-  const hubHost = typeof window !== 'undefined' ? window.location.hostname || 'localhost' : 'localhost';
   try {
-    const res = await fetch(`http://${hubHost}:4444/sms`, {
+    const res = await fetch(getHubApiUrl('/sms'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -487,9 +487,8 @@ export function updateSettings(partial: Partial<Settings>) {
  * Connects to hub if available; falls back to local authenticated unlock if offline
  */
 export async function requestHealthBriefing(taskId: string, volunteerId: string) {
-  const hubHost = typeof window !== 'undefined' ? window.location.hostname || 'localhost' : 'localhost';
   try {
-    const res = await fetch(`http://${hubHost}:4444/briefing/unlock`, {
+    const res = await fetch(getHubApiUrl('/briefing/unlock'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -604,9 +603,8 @@ export function downloadResidentData(householdId: string) {
 }
 
 export async function requestBreakGlassBriefing(taskId: string, actor: string, reason: string) {
-  const hubHost = typeof window !== 'undefined' ? window.location.hostname || 'localhost' : 'localhost';
   try {
-    const res = await fetch(`http://${hubHost}:4444/briefing/break-glass`, {
+    const res = await fetch(getHubApiUrl('/briefing/break-glass'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

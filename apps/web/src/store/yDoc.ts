@@ -44,14 +44,48 @@ indexeddbProvider.on('synced', () => {
   notifySyncListeners();
 });
 
-// 3. Signaling configuration & Providers
-const hubHost = typeof window !== 'undefined' ? window.location.hostname || 'localhost' : 'localhost';
-const defaultSignalingUrl = `ws://${hubHost}:4444`;
-export const defaultHubWsUrl = `ws://${hubHost}:4444/yjs`;
+// 3. Signaling configuration & Providers (Protocol & Environment Aware)
+export function getHubConnectionConfig() {
+  if (typeof window === 'undefined') {
+    return {
+      signalingUrl: 'ws://localhost:4444',
+      wsUrl: 'ws://localhost:4444',
+      httpUrl: 'http://localhost:4444',
+    };
+  }
 
-export const signalingUrl =
-  (typeof window !== 'undefined' && localStorage.getItem('rahatlink_signaling_url')) ||
-  defaultSignalingUrl;
+  const isHttps = window.location.protocol === 'https:';
+  const wsProto = isHttps ? 'wss:' : 'ws:';
+  const httpProto = isHttps ? 'https:' : 'http:';
+  const hostname = window.location.hostname || 'localhost';
+  const isViteDev = window.location.port === '5173' || window.location.port === '3000';
+
+  const hostWithPort = isViteDev ? `${hostname}:4444` : window.location.host;
+
+  const defaultSignaling = `${wsProto}//${hostWithPort}`;
+  const customSignaling = localStorage.getItem('rahatlink_signaling_url');
+
+  return {
+    signalingUrl: customSignaling || defaultSignaling,
+    wsUrl: `${wsProto}//${hostWithPort}`,
+    httpUrl: isViteDev ? `http://${hostname}:4444` : `${httpProto}//${window.location.host}`,
+  };
+}
+
+export function getHubApiUrl(endpointPath: string): string {
+  if (typeof window === 'undefined') return `http://localhost:4444${endpointPath}`;
+  const isViteDev = window.location.port === '5173' || window.location.port === '3000';
+  if (isViteDev) {
+    const hostname = window.location.hostname || 'localhost';
+    return `http://${hostname}:4444${endpointPath}`;
+  }
+  return endpointPath;
+}
+
+const connectionConfig = getHubConnectionConfig();
+export const defaultSignalingUrl = connectionConfig.signalingUrl;
+export const defaultHubWsUrl = `${connectionConfig.wsUrl}/yjs`;
+export const signalingUrl = connectionConfig.signalingUrl;
 
 // y-webrtc peer-to-peer sync
 export const webrtcProvider = new WebrtcProvider('rahatlink-demo', doc, {
@@ -62,7 +96,7 @@ export const webrtcProvider = new WebrtcProvider('rahatlink-demo', doc, {
 export let websocketProvider: WebsocketProvider | null = null;
 try {
   websocketProvider = new WebsocketProvider(
-    `ws://${hubHost}:4444`,
+    connectionConfig.wsUrl,
     'yjs',
     doc,
     { WebSocketPolyfill: typeof window !== 'undefined' ? window.WebSocket : undefined },
